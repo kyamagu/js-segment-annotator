@@ -3,10 +3,14 @@ JS Segment Annotator
 
 Javascript image annotation tool based on image segmentation.
 
+ * Label image regions with mouse.
  * Written in vanilla Javascript. No jQuery dependency.
  * Pure client-side implementation of image segmentation.
 
 A browser must support HTML canvas element to use this tool.
+
+There is an online demo at
+http://vision.cs.stonybrook.edu/~kyamagu/js-segment-annotator/ .
 
 Usage
 -----
@@ -31,9 +35,6 @@ Following example illustrates the basic usage.
       }
     };
     </script>
-
-For an example of UI implementation, see `index.html` or a demo at
-http://vision.cs.stonybrook.edu/~kyamagu/js-segment-annotator/
 
 API
 ---
@@ -77,19 +78,19 @@ Annotation tool class. The constructor takes a result of an image segmentation
 algorithm with options, which is internally called inside `PFSegmentAnnotator`.
 The class has the following public methods.
 
-_disable_
+__disable__
 
     annotator.disable()
 
 Disables mouse input.
 
-_enable_
+__enable__
 
     annotator.enable()
 
 Enables mouse input.
 
-_getLabels_
+__getLabels__
 
     annotator.getLabels()
 
@@ -102,7 +103,7 @@ the following.
       ...
     ]
 
-_setLabels_
+__setLabels__
 
     annotator.setLabels(labels)
 
@@ -110,44 +111,44 @@ Reset the label definitions. The input can be an array of strings or an array
 of objects that is the same format with the output of `getLabels`.
 
 
-_removeLabel_
+__removeLabel__
 
     annotator.removeLabel(index)
 
 Remove a specified label definition.
 
-_setCurrentLabel_
+__setCurrentLabel__
 
     annotator.setCurrentLabel(label)
 
 Set the current label for annotation. It can be an index of labels array or the
 name of the label. For example, `annotator.setCurrentLabel(1)`.
 
-_getCurrentLabel_
+__getCurrentLabel__
 
     annotator.getCurrentLabel()
 
 Get the currently chosen label.
 
-_setImageAlpha_
+__setImageAlpha__
 
     annotator.setImageAlpha(alpha)
 
 Set the alpha value of the image layer. A numeric value between 0 and 255.
 
-_setBoundaryAlpha_
+__setBoundaryAlpha__
 
     annotator.setBoundaryAlpha(alpha)
 
 Set the alpha value of the segment boundaries. A numeric value between 0 and 255.
 
-_setFillAlpha_
+__setFillAlpha__
 
     annotator.setFillAlpha(alpha)
 
 Set the alpha value of the segment fills. A numeric value between 0 and 255.
 
-_getAnnotation_
+__getAnnotation__
 
     annotator.getAnnotation()
 
@@ -161,7 +162,7 @@ be retrieved by the following way.
 
 Here, `data` is the array of RGB values and `offset` is the location of pixel.
 
-_setAnnotation_
+__setAnnotation__
 
     annotator.setAnnotation(image_url, callback)
 
