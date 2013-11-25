@@ -42,8 +42,8 @@ API
 
     PFSegmentAnnotator(image_url, options)
 
-High-level API that combines `PFSegmentation` and produces a `SegmentAnnotator`
-object.
+High-level API that produces a `SegmentAnnotator` object using
+`PFSegmentation`.
 
  * `image_url` - URL of an image to annotate. (Caution: do not use a large
                  image with more than 600px each side.)
@@ -52,7 +52,7 @@ object.
                   a single argument of SegmentAnnotator object. See
                   `SegmentAnnotator`.
    * `annotation` - Optional URL to an existing annotation PNG image. Use the
-                    output of `annotator.toDataURL`.
+                    output of `annotator.getAnnotation`.
    * `labels` - Labels to annotate. It can be an array of strings or an array
                 of objects that has `name` with optional `color` field. For
                 example, `{ name: 'background', color: [255, 255, 255] }`.
@@ -157,8 +157,7 @@ be retrieved by the following way.
 
     var label = (data[offset + 0]) |
                 (data[offset + 1] << 8) |
-                (data[offset + 2] << 16) |
-                (data[offset + 3] << 24);
+                (data[offset + 2] << 16);
 
 Here, `data` is the array of RGB values and `offset` is the location of pixel.
 
