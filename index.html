@@ -194,9 +194,12 @@
       // Download as a file.      
       function downloadAsFile(url, filename) {
         var anchor = document.createElement('a');
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
         anchor.setAttribute('href', url);
         anchor.setAttribute('download', filename);
         anchor.click();
+        document.body.removeChild(anchor);
       };
       // Attach button events.
       function initializeButtons(annotator) {
