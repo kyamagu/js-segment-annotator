@@ -7,7 +7,7 @@ Javascript image annotation tool based on image segmentation.
  * Written in vanilla Javascript. No jQuery dependency.
  * Pure client-side implementation of image segmentation.
 
-A browser must support HTML canvas element to use this tool.
+A browser must support HTML canvas to use this tool.
 
 There is an online demo at
 http://vision.cs.stonybrook.edu/~kyamagu/js-segment-annotator/ .
@@ -23,16 +23,15 @@ Following example illustrates the basic usage.
     <script type="text/javascript" src="segment-annotator.js"></script>
     <script type="text/javascript">
     document.onload = function() {
-      PFSegmentAnnotator('/path/to/image.jpg', {
+      new PFSegmentAnnotator('/path/to/image.jpg', {
         container: document.getElementById('annotator'),
         labels: ['background', 'head', 'torso', 'arms', 'legs'],
-        onload: initializeUserInterface
+        onload: function() {
+          var labels = this.getLabels();
+          // Set up your UI.
+          ...
+        }
       });
-
-      // Your own UI implementation.
-      function initializeUserInterface(annotator) {
-        ...
-      }
     };
     </script>
 
