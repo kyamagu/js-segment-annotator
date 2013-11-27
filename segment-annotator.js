@@ -4,32 +4,18 @@
 
 // Public API.
 
-// Create an annotation tool based on PFSegmentation.
-//
-// Include pf-segmentation.js before use.
-PFSegmentAnnotator = function(image_url, options) {
-  PFSegmentation(image_url, {
-    sigma: options.sigma,
-    threshold: options.threshold,
-    min_size: options.min_size,
-    callback: function(result) {
-      new SegmentAnnotator(result, options);
-    }
-  });
-};
-
 // SegmentAnnotator constructor.
 SegmentAnnotator = function(segmentation, options) {
   if (typeof options === 'undefined') options = {};
-  this.background_color = options.background_color || [192, 192, 192];
-  this.highlight_alpha = options.highlight_alpha || 128;
-  this.fill_alpha = options.fill_alpha || 128;
-  this.boundary_alpha = options.boundary_alpha || 192;
+  this.backgroundColor = options.backgroundColor || [192, 192, 192];
+  this.highlightAlpha = options.highlightAlpha || 128;
+  this.fillAlpha = options.fillAlpha || 128;
+  this.boundaryAlpha = options.boundaryAlpha || 192;
   // Variables.
   this.width = segmentation.width;
   this.height = segmentation.height;
-  this.index_map = segmentation.index_map;
-  this.rgb_data = segmentation.rgb_data;
+  this.indexMap = segmentation.indexMap;
+  this.rgbData = segmentation.rgbData;
   this.segments = segmentation.size;
   this.layers = {
     // background: { canvas: null, image: null }, // No need to keep.
@@ -37,19 +23,19 @@ SegmentAnnotator = function(segmentation, options) {
     annotation: { canvas: null, image: null },
     highlight: { canvas: null, image: null }
   };
-  this.current_segment = null;
-  this.current_label = null;
+  this.currentSegment = null;
+  this.currentLabel = null;
   // Initialize internal variables.
   this._initializeContainer(options.container);
   this._initializePixelsIndex();
   this._initializeBackgroundLayer();
   this._initializeColorMap(options.labels);
-  this._initializeAnnotations(options.annotation_url, function() {
+  this._initializeAnnotations(options.annotationURL, function() {
     this._initializeImageLayer();
     this._initializeAnnotationLayer();
     this._initializeHighlightLayer();
-    if (options.callback)
-      options.callback.call(this, this);
+    if (options.onload)
+      options.onload.call(this);
   });
 };
 
@@ -79,13 +65,13 @@ SegmentAnnotator.prototype.setCurrentLabel = function(label) {
       }
   if (typeof index !== 'number' || index < 0 || index >= this.labels.length)
     throw 'Invalid label: ' + label;
-  this.current_label = index;
+  this.currentLabel = index;
   return this;
 };
 
 // Get the current annotation label in a numeric index.
 SegmentAnnotator.prototype.getCurrentLabel = function() {
-  return this.current_label;
+  return this.currentLabel;
 };
 
 // Get the current label definitions.
@@ -101,20 +87,20 @@ SegmentAnnotator.prototype.getLabels = function() {
 // It can take an array of strings or array of objects of this format:
 // [{ name: 'label', color: [r, g, b] }, ...]
 // This method will not translate existing annotations.
-SegmentAnnotator.prototype.setLabels = function(new_labels) {
-  this._initializeColorMap(new_labels);
+SegmentAnnotator.prototype.setLabels = function(newLabels) {
+  this._initializeColorMap(newLabels);
   this._renderAnnotation();
   return this;
 };
 
 // Remove a label.
 SegmentAnnotator.prototype.removeLabel = function(index) {
-  var new_labels = [],
+  var newLabels = [],
       i;
   for (i = 0; i < this.labels.length; ++i)
     if (i !== index)
-      new_labels.push(this.labels[i]);
-  this._initializeColorMap(new_labels);
+      newLabels.push(this.labels[i]);
+  this._initializeColorMap(newLabels);
   for (i = 0; i < this.segments; ++i) {
     var value = this.annotations[i];
     if (value == index)
@@ -141,7 +127,7 @@ SegmentAnnotator.prototype.setImageAlpha = function(alpha) {
 // Set the alpha value for the segment boundary.
 SegmentAnnotator.prototype.setBoundaryAlpha = function(alpha) {
   if (alpha === undefined)
-    alpha = this.boundary_alpha;
+    alpha = this.boundaryAlpha;
   this._setAnnotationAlpha(alpha, true);
   return this;
 };
@@ -149,16 +135,16 @@ SegmentAnnotator.prototype.setBoundaryAlpha = function(alpha) {
 // Set the alpha value for the segment fill.
 SegmentAnnotator.prototype.setFillAlpha = function(alpha) {
   if (alpha === undefined)
-    alpha = this.fill_alpha;
+    alpha = this.fillAlpha;
   this._setAnnotationAlpha(alpha, false);
   return this;
 };
 
 // Set annotation.
-SegmentAnnotator.prototype.setAnnotation = function(image_url, callback) {
+SegmentAnnotator.prototype.setAnnotation = function(imageURL, callback) {
   this.layers.highlight.canvas.display = 'none';
   var _this = this;
-  this._importAnnotation(image_url, function() {
+  this._importAnnotation(imageURL, function() {
     _this._renderAnnotation();
     _this.layers.highlight.canvas.display = 'block';
     if (typeof callback === 'function') callback(self);
@@ -172,16 +158,16 @@ SegmentAnnotator.prototype.getAnnotation = function() {
   canvas.width = this.width;
   canvas.height = this.height;
   var context = canvas.getContext('2d');
-  var image_data = context.getImageData(0, 0, canvas.width, canvas.height);
-  var data = image_data.data;
-  for (var i = 0; i < this.index_map.length; ++i) {
-    var label = this.annotations[this.index_map[i]];
+  var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  var data = imageData.data;
+  for (var i = 0; i < this.indexMap.length; ++i) {
+    var label = this.annotations[this.indexMap[i]];
     data[4 * i + 0] = label & 255;
     data[4 * i + 1] = (label >>> 8) & 255;
     data[4 * i + 2] = (label >>> 16) & 255;
     data[4 * i + 3] = 255;
   }
-  context.putImageData(image_data, 0, 0);
+  context.putImageData(imageData, 0, 0);
   return canvas.toDataURL();
 };
 
@@ -193,7 +179,7 @@ SegmentAnnotator.prototype._getSegmentIndex = function(event) {
       y = event.pageY - this.container.offsetTop + this.container.scrollTop;
   x = Math.max(Math.min(x, this.layers.highlight.canvas.width - 1), 0);
   y = Math.max(Math.min(y, this.layers.highlight.canvas.height - 1), 0);
-  return this.index_map[y * this.layers.highlight.canvas.width + x];
+  return this.indexMap[y * this.layers.highlight.canvas.width + x];
 };
 
 // Update highlight layers.highlight.canvas.
@@ -201,16 +187,16 @@ SegmentAnnotator.prototype._updateHighlight = function(index) {
   var data = this.layers.highlight.image.data,
       i,
       pixels;
-  if (this.current_segment !== null) {
-    pixels = this.pixels_map[this.current_segment];
+  if (this.currentSegment !== null) {
+    pixels = this.pixelsMap[this.currentSegment];
     for (i = 0; i < pixels.length; ++i)
       data[4 * pixels[i] + 3] = 0;
   }
-  this.current_segment = index;
-  if (this.current_segment !== null) {
-    pixels = this.pixels_map[this.current_segment];
+  this.currentSegment = index;
+  if (this.currentSegment !== null) {
+    pixels = this.pixelsMap[this.currentSegment];
     for (i = 0; i < pixels.length; ++i)
-      data[4 * pixels[i] + 3] = this.highlight_alpha;
+      data[4 * pixels[i] + 3] = this.highlightAlpha;
   }
   this.layers.highlight.canvas
       .getContext('2d')
@@ -220,14 +206,14 @@ SegmentAnnotator.prototype._updateHighlight = function(index) {
 
 // Update label.
 SegmentAnnotator.prototype._updateAnnotation = function(index, render) {
-  if (render && this.annotations[index] === this.current_label)
+  if (render && this.annotations[index] === this.currentLabel)
     return;
   var data = this.layers.annotation.image.data,
-      pixels = this.pixels_map[index];
-  this.annotations[index] = this.current_label;
+      pixels = this.pixelsMap[index];
+  this.annotations[index] = this.currentLabel;
   for (var i = 0; i < pixels.length; ++i) {
     var offset = 4 * pixels[i],
-        color = this.labels[this.current_label].color;
+        color = this.labels[this.currentLabel].color;
     data[offset + 0] = color[0];
     data[offset + 1] = color[1];
     data[offset + 2] = color[2];
@@ -242,16 +228,16 @@ SegmentAnnotator.prototype._updateAnnotation = function(index, render) {
 // Initialize pixels index.
 SegmentAnnotator.prototype._initializePixelsIndex = function() {
   var i;
-  this.pixels_map = new Array(this.segments);
+  this.pixelsMap = new Array(this.segments);
   for (i = 0; i < this.segments; ++i)
-    this.pixels_map[i] = [];
-  for (i = 0; i < this.index_map.length; ++i)
-    this.pixels_map[this.index_map[i]].push(i);
+    this.pixelsMap[i] = [];
+  for (i = 0; i < this.indexMap.length; ++i)
+    this.pixelsMap[this.indexMap[i]].push(i);
   return this;
 };
 
 // Initialize a color map.
-SegmentAnnotator.prototype._initializeColorMap = function(new_labels) {
+SegmentAnnotator.prototype._initializeColorMap = function(newLabels) {
   // Calculate RGB value of HSV input.
   function hsv2rgb(h, s, v) {
     var i = Math.floor(h * 6),
@@ -280,20 +266,20 @@ SegmentAnnotator.prototype._initializeColorMap = function(new_labels) {
       return hsv2rgb((index - 1) / Math.max(1, range - 1), 1, 1);
   }
 
-  if (new_labels === undefined) {
+  if (newLabels === undefined) {
     this.labels = [
       { name: 'background', color: [255, 255, 255] },
       { name: 'foreground', color: [255,   0,   0] }
     ];
   } else {
-    if (typeof new_labels !== 'object')
+    if (typeof newLabels !== 'object')
       throw 'Labels must be an array';
-    if (new_labels.length < 1)
+    if (newLabels.length < 1)
       throw 'Empty labels';
     var uncolored = 0,
         index = 0,
         i;
-    this.labels = new_labels.slice(0);
+    this.labels = newLabels.slice(0);
     for (i = 0; i < this.labels.length; ++i) {
       if (typeof this.labels[i] === 'string')
         this.labels[i] = { name: this.labels[i] };
@@ -319,30 +305,30 @@ SegmentAnnotator.prototype._importAnnotation = function(url, callback) {
     canvas.height = _this.height;
     var context = canvas.getContext('2d');
     context.drawImage(image, 0, 0, _this.width, _this.height);
-    var source_data = context.getImageData(0, 0, _this.width, _this.height)
+    var sourceData = context.getImageData(0, 0, _this.width, _this.height)
                              .data;
     // For each segment, assign the dominant label.
     var label;
     for (var i = 0; i < _this.segments; ++i) {
-      var pixels = _this.pixels_map[i],
+      var pixels = _this.pixelsMap[i],
           histogram = {};
       for (var j = 0; j < pixels.length; ++j) {
         var offset = 4 * pixels[j];
-        label = source_data[offset + 0] |
-                (source_data[offset + 1] << 8) |
-                (source_data[offset + 2] << 16);
+        label = sourceData[offset + 0] |
+                (sourceData[offset + 1] << 8) |
+                (sourceData[offset + 2] << 16);
         var count = histogram[label] || 0;
         histogram[label] = ++count;
       }
-      var dominant_label = source_data[4 * pixels[0]];
+      var dominantLabel = sourceData[4 * pixels[0]];
       for (label in histogram)
-        if (histogram[label] > histogram[dominant_label])
-          dominant_label = label;
-      if (dominant_label >= _this.labels.length)
-        dominant_label = 0;
-      _this.annotations[i] = dominant_label;
+        if (histogram[label] > histogram[dominantLabel])
+          dominantLabel = label;
+      if (dominantLabel >= _this.labels.length)
+        dominantLabel = 0;
+      _this.annotations[i] = dominantLabel;
     }
-    _this.current_label = 0;
+    _this.currentLabel = 0;
     callback.call(this);
   };
   return this;
@@ -363,18 +349,18 @@ SegmentAnnotator.prototype._initializeAnnotations = function(url, callback) {
 
 // Render annotation layer.
 SegmentAnnotator.prototype._renderAnnotation = function() {
-  var current = this.current_label;
+  var current = this.currentLabel;
   if (current >= this.labels.length)
     current = 0;
   var context = this.layers.annotation.canvas.getContext('2d');
   for (var i = 0; i < this.segments; ++i) {
-    this.current_label = this.annotations[i];
-    if (this.current_label >= this.labels.length)
-      this.current_label = 0;
+    this.currentLabel = this.annotations[i];
+    if (this.currentLabel >= this.labels.length)
+      this.currentLabel = 0;
     this._updateAnnotation(i, false);
   }
   context.putImageData(this.layers.annotation.image, 0, 0);
-  this.current_label = current;
+  this.currentLabel = current;
   return this;
 };
 
@@ -394,12 +380,12 @@ SegmentAnnotator.prototype._createLayer = function() {
 SegmentAnnotator.prototype._initializeAnnotationLayer = function() {
   var canvas = this._createLayer(),
       context = canvas.getContext('2d'),
-      image_data = context.getImageData(0, 0, this.width, this.height);
+      imageData = context.getImageData(0, 0, this.width, this.height);
   this.layers.annotation.canvas = canvas;
-  this.layers.annotation.image = image_data;
+  this.layers.annotation.image = imageData;
   this._renderAnnotation();
-  this._setAnnotationAlpha(this.boundary_alpha, true);
-  this._setAnnotationAlpha(this.fill_alpha, false);
+  this._setAnnotationAlpha(this.boundaryAlpha, true);
+  this._setAnnotationAlpha(this.fillAlpha, false);
   return this;
 };
 
@@ -407,16 +393,16 @@ SegmentAnnotator.prototype._initializeAnnotationLayer = function() {
 SegmentAnnotator.prototype._initializeBackgroundLayer = function() {
   var canvas = this._createLayer(),
       context = canvas.getContext('2d'),
-      image_data = context.createImageData(this.width, this.height),
-      data = image_data.data,
-      color = this.background_color;
+      imageData = context.createImageData(this.width, this.height),
+      data = imageData.data,
+      color = this.backgroundColor;
   for (var i = 0; i < data.length; i += 4) {
     data[i + 0] = color[0];
     data[i + 1] = color[1];
     data[i + 2] = color[2];
     data[i + 3] = 255;
   }
-  context.putImageData(image_data, 0, 0);
+  context.putImageData(imageData, 0, 0);
   return this;
 };
 
@@ -424,11 +410,11 @@ SegmentAnnotator.prototype._initializeBackgroundLayer = function() {
 SegmentAnnotator.prototype._initializeImageLayer = function() {
   var canvas = this._createLayer(),
       context = canvas.getContext('2d'),
-      image_data = context.createImageData(this.width, this.height);
-  image_data.data.set(this.rgb_data);
-  context.putImageData(image_data, 0, 0);
+      imageData = context.createImageData(this.width, this.height);
+  imageData.data.set(this.rgbData);
+  context.putImageData(imageData, 0, 0);
   this.layers.image.canvas = canvas;
-  this.layers.image.image = image_data;
+  this.layers.image.image = imageData;
   return this;
 };
 
@@ -438,8 +424,8 @@ SegmentAnnotator.prototype._initializeHighlightLayer = function() {
   canvas.style.cursor = 'pointer';
   canvas.oncontextmenu = function() { return false; };
   var context = canvas.getContext('2d');
-  var image_data = context.createImageData(this.width, this.height);
-  var data = image_data.data;
+  var imageData = context.createImageData(this.width, this.height);
+  var data = imageData.data;
   for (var i = 0; i < data.length; i += 4) {
     data[i + 0] = 255;
     data[i + 1] = 255;
@@ -447,20 +433,20 @@ SegmentAnnotator.prototype._initializeHighlightLayer = function() {
     data[i + 3] = 0;
   }
   this.layers.highlight.canvas = canvas;
-  this.layers.highlight.image = image_data;
+  this.layers.highlight.image = imageData;
 
   var mousestate = { down: false, button: 0 },
       _this = this;
   // On mousemove or mouseup.
   function updateIfActive(event) {
-    var segment_id = _this._getSegmentIndex(event);
-    _this._updateHighlight(segment_id);
+    var segmentId = _this._getSegmentIndex(event);
+    _this._updateHighlight(segmentId);
     if (mousestate.down) {
-      var label = _this.current_label;
+      var label = _this.currentLabel;
       if (mousestate.button == 2)
-        _this.current_label = 0;
-      _this._updateAnnotation(segment_id, true);
-      _this.current_label = label;
+        _this.currentLabel = 0;
+      _this._updateAnnotation(segmentId, true);
+      _this.currentLabel = label;
     }
   }
   this.layers.highlight.canvas.addEventListener('mousemove', updateIfActive);
@@ -482,26 +468,26 @@ SegmentAnnotator.prototype._initializeHighlightLayer = function() {
 };
 
 // Set alpha value at the annotation layer.
-SegmentAnnotator.prototype._setAnnotationAlpha = function(alpha, at_boundary) {
+SegmentAnnotator.prototype._setAnnotationAlpha = function(alpha, atBoundary) {
   var context = this.layers.annotation.canvas.getContext('2d');
-  var index_map = this.index_map;
+  var indexMap = this.indexMap;
   var width = this.width;
   var height = this.height;
   var data = this.layers.annotation.image.data;
   for (var i = 0; i < height; ++i) {
     for (var j = 0; j < width; ++j) {
-      var index = index_map[i * width + j];
-      var is_boundary = (i === 0 ||
-                         j === 0 ||
-                         i === (height - 1) ||
-                         j === (width - 1) ||
-                         index !== index_map[i * width + j - 1] ||
-                         index !== index_map[i * width + j + 1] ||
-                         index !== index_map[(i - 1) * width + j] ||
-                         index !== index_map[(i + 1) * width + j]);
-      if (is_boundary && at_boundary)
+      var index = indexMap[i * width + j];
+      var isBoundary = (i === 0 ||
+                        j === 0 ||
+                        i === (height - 1) ||
+                        j === (width - 1) ||
+                        index !== indexMap[i * width + j - 1] ||
+                        index !== indexMap[i * width + j + 1] ||
+                        index !== indexMap[(i - 1) * width + j] ||
+                        index !== indexMap[(i + 1) * width + j]);
+      if (isBoundary && atBoundary)
         data[4 * (i * width + j) + 3] = alpha;
-      else if (!is_boundary && !at_boundary)
+      else if (!isBoundary && !atBoundary)
         data[4 * (i * width + j) + 3] = alpha;
     }
   }
@@ -524,3 +510,21 @@ SegmentAnnotator.prototype._initializeContainer = function(container) {
   this.container.style.display = 'inline-block';
   return this;
 };
+
+// Create an annotation tool based on PFSegmentation.
+//
+// Include pf-segmentation.js before use.
+PFSegmentAnnotator = function(imageURL, options) {
+  var _this = this;
+  PFSegmentation(imageURL, {
+    sigma: options.sigma,
+    threshold: options.threshold,
+    minSize: options.minSize,
+    callback: function(result) {
+      SegmentAnnotator.call(_this, result, options);
+    }
+  });
+};
+
+// Set up inheritance.
+PFSegmentAnnotator.prototype = Object.create(SegmentAnnotator.prototype);

@@ -78,10 +78,10 @@
   </div>
   <script type="text/javascript">
     window.onload = function() {
-      PFSegmentAnnotator('example.jpg', {
+      new PFSegmentAnnotator('example.jpg', {
         sigma: 0.1,
         threshold: 300,
-        min_size: 50,
+        minSize: 50,
         container: document.getElementById('annotator-container'),
         // annotation: 'annotation.png' // optional existing annotation data.
         labels: [
@@ -90,10 +90,10 @@
           'skirt',
           'belt'
           ],
-        callback: function(annotator) {
-          initializeLegend(annotator);
-          initializeLegendAdd(annotator);
-          initializeButtons(annotator);
+        onload: function() {
+          initializeLegend(this);
+          initializeLegendAdd(this);
+          initializeButtons(this);
         }
       });
       // Create a legend.
@@ -126,16 +126,16 @@
           attachClickEvent(item, i);
           // Create a delete button.
           if (i !== 0) {
-            var delete_button = document.createElement('div');
-            delete_button.innerHTML = '&times;';
-            delete_button.classList.add('legend-delete-button');
-            legend.appendChild(delete_button);
-            attachDeleteEvent(annotator, delete_button, i);
+            var deleteButton = document.createElement('div');
+            deleteButton.innerHTML = '&times;';
+            deleteButton.classList.add('legend-delete-button');
+            legend.appendChild(deleteButton);
+            attachDeleteEvent(annotator, deleteButton, i);
           }
           legend.appendChild(document.createElement('br'));
         }
-        var current_index = Math.min(1, labels.length - 1);
-        document.getElementsByClassName('legend-item')[current_index].click();
+        var currentIndex = Math.min(1, labels.length - 1);
+        document.getElementsByClassName('legend-item')[currentIndex].click();
       }
       // Attach a click event to a delete button.
       function attachDeleteEvent(annotator, button, index) {
@@ -149,30 +149,30 @@
         var input = document.getElementById('add-label-input');
         input.addEventListener('keyup', function(event) {
           if (event.keyCode === 13) {
-            var new_labels = annotator.getLabels();
+            var newLabels = annotator.getLabels();
             // Drop colors except the first.
-            for (var i = 1; i < new_labels.length; ++i)
-              new_labels[i] = new_labels[i].name;
-            new_labels.push(event.target.value);
-            annotator.setLabels(new_labels);
+            for (var i = 1; i < newLabels.length; ++i)
+              newLabels[i] = newLabels[i].name;
+            newLabels.push(event.target.value);
+            annotator.setLabels(newLabels);
             initializeLegend(annotator);
             event.target.value = '';
-            var index = new_labels.length - 1;
+            var index = newLabels.length - 1;
             document.getElementsByClassName('legend-item')[index].click();
           }
         });
       }
       // Create a slide radio input.
-      function createToggleButton(button, disable_callback, enable_callback) {
+      function createToggleButton(button, disableCallback, enableCallback) {
         var enabled = true;
         button.addEventListener('click', function() {
           if (enabled) {
-            disable_callback();
+            disableCallback();
             button.classList.add('toggle-button-disabled');
             enabled = !enabled;
           }
           else {
-            enable_callback();
+            enableCallback();
             button.classList.remove('toggle-button-disabled');
             enabled = !enabled;
           }
@@ -203,30 +203,30 @@
       };
       // Attach button events.
       function initializeButtons(annotator) {
-        var fill_alpha = 128;
-        var boundary_enabled = true;
+        var fillAlpha = 128;
+        var boundaryEnabled = true;
         createToggleButton(document.getElementById('image-view-button'),
                            function() { annotator.setImageAlpha(0); },
                            function() { annotator.setImageAlpha(255); });
         createToggleButton(document.getElementById('boundary-view-button'), function() {
-          annotator.setBoundaryAlpha(fill_alpha);
-          boundary_enabled = !boundary_enabled;
+          annotator.setBoundaryAlpha(fillAlpha);
+          boundaryEnabled = !boundaryEnabled;
         }, function() {
-          if (fill_alpha === 128)
+          if (fillAlpha === 128)
             annotator.setBoundaryAlpha(192);
-          boundary_enabled = !boundary_enabled;
+          boundaryEnabled = !boundaryEnabled;
         });
         createToggleButton(document.getElementById('fill-view-button'), function() {
-          fill_alpha = 0;
-          annotator.setFillAlpha(fill_alpha);
-          annotator.setBoundaryAlpha(fill_alpha);
+          fillAlpha = 0;
+          annotator.setFillAlpha(fillAlpha);
+          annotator.setBoundaryAlpha(fillAlpha);
         }, function() {
-          fill_alpha = 128;
-          annotator.setFillAlpha(fill_alpha);
-          if (boundary_enabled)
+          fillAlpha = 128;
+          annotator.setFillAlpha(fillAlpha);
+          if (boundaryEnabled)
             annotator.setBoundaryAlpha(192);
           else
-            annotator.setBoundaryAlpha(fill_alpha);
+            annotator.setBoundaryAlpha(fillAlpha);
         });
         // Set up json importer.
         createFileInput(document.getElementById('import-button'), function(file) {
@@ -246,9 +246,9 @@
             labels: annotator.getLabels(),
             annotation: annotator.getAnnotation()
           };
-          var data_url = 'data:application/json;charset=utf-8,' +
-                         encodeURIComponent(JSON.stringify(data));
-          downloadAsFile(data_url, 'export.json');
+          var dataURL = 'data:application/json;charset=utf-8,' +
+                        encodeURIComponent(JSON.stringify(data));
+          downloadAsFile(dataURL, 'export.json');
         });
       }
     }
