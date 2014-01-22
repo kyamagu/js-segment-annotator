@@ -32,7 +32,8 @@
 (function() {
 
      // rgba: Red Green Blue Alpha
-     function RGB2XYZ(rgba, w, h){
+     // convert RGBA into XYZ color space
+     function rgb2xyz(rgba, w, h){
          var xyz = new Float32Array(3*w*h);
          for (var i = 0; i<w*h; i++){
              var r = parseFloat(rgba[4*i+0]) ;
@@ -45,6 +46,7 @@
          return xyz;
      }
 
+     // this function is used for XYZ2Lab
      function f(x){
          if (x > 0.00856){
              return Math.pow(x, 0.33333333);
@@ -54,8 +56,8 @@
          }
      }
 
-
-     function XYZ2Lab(XYZ, w, h){
+     // convert XYZ to Lab
+     function xyz2lab(XYZ, w, h){
          var xw = 1.0/3.0;
          var yw = 1.0/3.0;
 
@@ -83,6 +85,7 @@
      }
 
 
+     // compute gradient of 3 channel color space image
      function compute_edge(im, edgeMap, w, h){
          for (var k = 0; k<3; k++){
              for (var y = 1; y<h-1; y++){
@@ -97,8 +100,8 @@
          }
      }
 
+     // initialize superpixel clusters
      function initialize_kmeans_centers(im, edgeMap, centers, numRegionsX, numRegionsY, regionSize, imW, imH){
-
          var x, y;
          var i = 0;
 
@@ -141,6 +144,7 @@
      }
 
 
+     // compute energy of clustering assignment
      function compute_slic_energy(im, segmentation, centers, factor, numRegionsX, numRegionsY, regionSize, imW, imH){
 
          var energy = 0;
@@ -160,8 +164,6 @@
 
                          var spatial = (x - centerx) * (x - centerx) + (y - centery) * (y - centery) ;
 
-                         var distance ;
-
                          var dR = im[y*imW + x] - centers[5*region + 2]; // R
                          var dG = im[imW * imH + y*imW + x] - centers[5*region + 3]; // G
                          var dB = im[2 * imW * imH + y*imW + x] - centers[5*region + 4]; // B
@@ -180,6 +182,7 @@
          return energy / (numRegionsX * numRegionsY);
      }
 
+     // re-compute clusters
      function compute_centers(im, segmentation, masses, centers, numRegions, imW, imH){
          for (var y = 0 ; y < imH ; y++) {
              for (var x = 0 ; x < imW ; x++) {
@@ -214,6 +217,8 @@
              p[i] = q[i];
      }
 
+
+     // remove small superpixels and assign them the nearest superpixel label
      function eliminate_small_regions(segmentation, minRegionSize, numPixels, imW, imH){
 
          var cleaned = new Int32Array(numPixels);
@@ -225,7 +230,7 @@
          var dx = new Array(1, -1, 0, 0);
          var dy = new Array(0, 0, 1, -1);
          var pixel;
-
+         var x, y;
          for (pixel = 0 ; pixel < numPixels ; pixel++) {
              if (cleaned[pixel]) continue ;
              label = segmentation[pixel] ;
@@ -236,8 +241,8 @@
              // find cleanedLabel as the label of an already cleaned region neihbour of this pixel
              cleanedLabel = label + 1 ;
              cleaned[pixel] = label + 1 ;
-             var x = pixel % imW ;
-             var y = Math.floor(pixel / imW);
+             x = (pixel % imW);
+             y = Math.floor(pixel / imW);
              for (var direction = 0 ; direction < 4 ; direction++) {
                  var xp = x + dx[direction] ;
                  var yp = y + dy[direction] ;
@@ -250,13 +255,13 @@
              // expand the segment
              while (numExpanded < segmentSize) {
                  var open = segment[numExpanded++] ;
-                 var x = open % imW ;
-                 var y = Math.floor(open / imW );
+                 x = open % imW ;
+                 y = Math.floor(open / imW );
                  for (var direction = 0 ; direction < 4 ; ++direction) {
                      var xp = x + dx[direction] ;
                      var yp = y + dy[direction] ;
                      var neighbor = xp + yp * imW ;
-                     if (0 <= xp && xp < imW && 0 <= yp && yp < imH && cleaned[neighbor] == 0 && segmentation[neighbor] == label) {
+                     if (0 <= xp && xp < imW && 0 <= yp && yp < imH && cleaned[neighbor] === 0 && segmentation[neighbor] === label) {
                          cleaned[neighbor] = label + 1 ;
                          segment[segmentSize++] = neighbor ;
                      }
@@ -298,7 +303,7 @@
          //var XYZ = RGB2XYZ(imageData.data, imageData.width, imageData.height);
 
 
-         var Lab = XYZ2Lab(RGB2XYZ(imageData.data, imageData.width, imageData.height), imageData.width, imageData.height);
+         var Lab = xyz2lab(rgb2xyz(imageData.data, imageData.width, imageData.height), imageData.width, imageData.height);
 
          // compute edge
          compute_edge(Lab, edgeMap, imageData.width, imageData.height);
@@ -310,7 +315,7 @@
          var previousEnergy = Infinity;
          var startingEnergy = 0;
          var maxNumIterations = 10;
-         var factor = options.regularization / (regionSize * regionSize);
+         var factor = options.regularization * options.regularization / (regionSize * regionSize);
          var segmentation = new Int32Array(numPixels);
          var iter;
          for (iter = 0; iter < maxNumIterations; iter++){
@@ -366,12 +371,13 @@
 
          // construct mapping
          var M = {};
-         for (var i = 0; i< labels.length; i++){
+         var i;
+         for (i = 0; i< labels.length; i++){
              M[labels[i]] = i;
          }
 
 
-         for (var i =0; i<segmentation.length; i++){
+         for (i =0; i<segmentation.length; i++){
              segmentation[i] = M[segmentation[i]];
          }
 

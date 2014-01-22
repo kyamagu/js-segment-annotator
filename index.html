@@ -2,6 +2,7 @@
 <head>
   <script type="text/javascript" src="pf-segmentation.js"></script>
   <script type="text/javascript" src="segment-annotator.js"></script>
+  <script type="text/javascript" src="slic-segmentation.js"></script>
   <style type="text/css">
     body {
       font-family: Verdana, Arial, sans-serif;
@@ -78,10 +79,9 @@
   </div>
   <script type="text/javascript">
     window.onload = function() {
-      new PFSegmentAnnotator('example.jpg', {
-        sigma: 0.1,
-        threshold: 300,
-        minSize: 50,
+      new SLICAnnotator('example.jpg', {
+        regionSize: 30,
+        regularization: 10,
         container: document.getElementById('annotator-container'),
         // annotation: 'annotation.png' // optional existing annotation data.
         labels: [
