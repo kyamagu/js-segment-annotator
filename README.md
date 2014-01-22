@@ -19,11 +19,11 @@ Following example illustrates the basic usage.
 
     <div id="annotator"></div>
     ...
-    <script type="text/javascript" src="pf-segmentation.js"></script>
+    <script type="text/javascript" src="slic-segmentation.js"></script>
     <script type="text/javascript" src="segment-annotator.js"></script>
     <script type="text/javascript">
     document.onload = function() {
-      new PFSegmentAnnotator('/path/to/image.jpg', {
+      new SLICSegmentAnnotator('/path/to/image.jpg', {
         container: document.getElementById('annotator'),
         labels: ['background', 'head', 'torso', 'arms', 'legs'],
         onload: function() {
@@ -35,8 +35,43 @@ Following example illustrates the basic usage.
     };
     </script>
 
+Load `pf-segmentation.js` instead of `slic-segmentation.js` to use
+`PFSegmentAnnotator`.
+
 API
 ---
+
+### SLICSegmentAnnotator
+
+    new SLICSegmentAnnotator(imageURL, options)
+
+A class object to generate an annotation canvas from the given image URL. It
+internally calls `SLICSegmentation` to generate segmentation.
+
+ * `imageURL` - URL of an image to annotate. (Caution: do not use a large
+                 image with more than 600px each side.)
+ * `options` - Optional input arguments. Following options are accepted.
+   * `onload` - Function to be called upon intialization. The annotator object
+                is accessible by `this`.
+   * `annotation` - Optional URL to an existing annotation PNG image. Use the
+                    output of `annotator.getAnnotation`.
+   * `labels` - Labels to annotate. It can be an array of strings or an array
+                of objects that has `name` with optional `color` field. For
+                example, `{ name: 'background', color: [255, 255, 255] }`.
+                You may use the output of `annotator.getLabels()`. By default,
+                `['background', 'foreground']` is specified.
+   * `container` - Container DOM element to place the annotation tool. e.g.,
+                   `document.getElementById('annotator')`. By default, the
+                   tool is appended at the end of the `document.body`.
+   * `highlightAlpha` - Alpha value for the segment under mouse pointer. It 
+                         takes a number between 0 to 255. Default 128.
+   * `backgroundColor` - Color of the background of the annotation image.
+                          Default [192, 192, 192].
+   * `regionSize` - Parameter of superpixel size for SLIC segmentation.
+   * `regularization` - Regularization parameter for SLIC segmentation.
+   * `minRegionSize` - Minimum segment size in pixels for SLIC segmentation.
+
+The class inherits from the `SegmentAnnotator` class.
 
 ### PFSegmentAnnotator
 
@@ -68,7 +103,7 @@ internally calls `PFSegmentation` to generate segmentation.
    * `threshold` - Threshold value `k` of PF-segmentation.
    * `minSize` - Minimum segment size of PF-segmentation.
 
-The class inherits from the `SegmentAnnotator` class below.
+The class inherits from the `SegmentAnnotator` class.
 
 ### SegmentAnnotator
 
@@ -158,6 +193,34 @@ __setAnnotation__ Set the current annotation from a PNG-format image URL.
 
 The optional callback takes an annotator object.
 
+### SLICSegmentation
+
+    SLICSegmentation(imageURL, options)
+
+Javascript implementation of an image segmentation algorithm of
+
+    SLIC Superpixels
+    Radhakrishna Achanta, Appu Shaji, Kevin Smith, Aurelien Lucchi, Pascal
+    Fua, and Sabine Süsstrunk
+    IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 34,
+    num. 11, p. 2274 - 2282, May 2012.
+
+based on the VLFeat implementation. The function takes the following options.
+
+ * `regionSize` - Parameter of superpixel size
+ * `regularization` - Regularization parameter. See paper.
+ * `minRegionSize` - Minimum segment size in pixels.
+ * `toDataURL` - Callback function to receive the result as a data URL.
+ * `callback` - Function to be called on finish. The function takes a single
+                argument of result object that contains following fields.
+    * `width` - Width of the image in pixels.
+    * `height` - Height of the image in pixels.
+    * `size` - Number of segments.
+    * `indexMap` - Int32Array of `width * height` elements containing
+                   segment index for each pixel location. The segment index
+                   at pixel `(i, j)` is `indexMap(i * width + j)`, where
+                   `i` is the y coordinate of the pixel and `j` is the x
+                   coordinate.
 
 ### PFSegmentation
 
@@ -193,10 +256,10 @@ _Example_
 Drawing the segmentation result to a canvas.
 
     function colorRandomRGB(size, indexMap, imageData) {
-      var width = imageData.width;
-      var height = imageData.height;
-      var rgb_data = imageData.data;
-      var colormap = new Uint8Array(size * 3);
+      var width = imageData.width,
+          height = imageData.height,
+          rgb_data = imageData.data,
+          colormap = new Uint8Array(size * 3);
       for (var i = 0; i < colormap.length; ++i)
         colormap[i] = Math.round(255 * Math.random());
       for (var i = 0; i < height; ++i) {
@@ -218,8 +281,8 @@ Drawing the segmentation result to a canvas.
         var canvas = document.createElement('canvas');
         canvas.width = result.width;
         canvas.height = result.height;
-        var context = canvas.getContext('2d');
-        var imageData = context.getImageData(0,
+        var context = canvas.getContext('2d'),
+            imageData = context.getImageData(0,
                                              0,
                                              canvas.width,
                                              canvas.height);
@@ -228,3 +291,14 @@ Drawing the segmentation result to a canvas.
         document.body.appendChild(canvas);
       }
     });
+
+Contributing
+------------
+
+Please send me a pull request. Briefly check
+[the style guide](https://github.com/airbnb/javascript) before submitting.
+
+### Acknowledgement
+
+ * Special thanks to [Long Long Yu](https://github.com/lolongcovas) for SLIC
+   implementation!
