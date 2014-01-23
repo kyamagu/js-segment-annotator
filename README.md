@@ -258,17 +258,17 @@ Drawing the segmentation result to a canvas.
     function colorRandomRGB(size, indexMap, imageData) {
       var width = imageData.width,
           height = imageData.height,
-          rgb_data = imageData.data,
+          rgbData = imageData.data,
           colormap = new Uint8Array(size * 3);
       for (var i = 0; i < colormap.length; ++i)
         colormap[i] = Math.round(255 * Math.random());
       for (var i = 0; i < height; ++i) {
         for (var j = 0; j < width; ++j) {
           var index = indexMap[i * width + j];
-          rgb_data[4 * (i * width + j) + 0] = colormap[3 * index + 0];
-          rgb_data[4 * (i * width + j) + 1] = colormap[3 * index + 1];
-          rgb_data[4 * (i * width + j) + 2] = colormap[3 * index + 2];
-          rgb_data[4 * (i * width + j) + 3] = 255;
+          rgbData[4 * (i * width + j) + 0] = colormap[3 * index + 0];
+          rgbData[4 * (i * width + j) + 1] = colormap[3 * index + 1];
+          rgbData[4 * (i * width + j) + 2] = colormap[3 * index + 2];
+          rgbData[4 * (i * width + j) + 3] = 255;
         }
       }
     }
