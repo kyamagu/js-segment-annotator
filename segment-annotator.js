@@ -536,8 +536,6 @@ SLICAnnotator = function(imageURL, options){
 
             SLIC(imageURL, {
                      regionSize : options.regionSize,
-                     regularization : options.regularization,
-                     minRegionSize : options.minRegionSize,
                      callback : function(result){
                                     SegmentAnnotator.call(_this, result, options);
                                 }

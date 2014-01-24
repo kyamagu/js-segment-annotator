@@ -35,13 +35,17 @@
      // convert RGBA into XYZ color space
      function rgb2xyz(rgba, w, h){
          var xyz = new Float32Array(3*w*h);
+         var gamma = 2.2;
          for (var i = 0; i<w*h; i++){
-             var r = parseFloat(rgba[4*i+0]) ;
-             var g = parseFloat(rgba[4*i+1]) ;
-             var b = parseFloat(rgba[4*i+2]) ;
-             xyz[i] = (r * 0.4887180 + g * 0.310680 + b * 0.2006020) * 0.00392156862;
-             xyz[i + w*h] = (r * 0.1762040 + g * 0.812985 + b * 0.0108109) * 0.00392156862;
-             xyz[i + 2*w*h] = (g * 0.0102048 + b * 0.989795) * 0.00392156862;
+             var r = parseFloat(rgba[4*i+0]) * 0.00392156862;
+             var g = parseFloat(rgba[4*i+1]) * 0.00392156862;
+             var b = parseFloat(rgba[4*i+2]) * 0.00392156862;
+             r = Math.pow(r, gamma);
+             g = Math.pow(g, gamma);
+             b = Math.pow(b, gamma);
+             xyz[i] = (r * 0.4887180 + g * 0.310680 + b * 0.2006020);
+             xyz[i + w*h] = (r * 0.1762040 + g * 0.812985 + b * 0.0108109);
+             xyz[i + 2*w*h] = (g * 0.0102048 + b * 0.989795);
          }
          return xyz;
      }
@@ -101,9 +105,9 @@
      }
 
      // initialize superpixel clusters
-     function initialize_kmeans_centers(im, edgeMap, centers, numRegionsX, numRegionsY, regionSize, imW, imH){
+     function initialize_kmeans_centers(im, edgeMap, centers, cluster_params, numRegionsX, numRegionsY, regionSize, imW, imH){
          var x, y;
-         var i = 0;
+         var i = 0, j= 0;
 
          for (var v = 0 ; v < numRegionsY ; v++) {
              for (var u = 0 ; u < numRegionsX ; u++) {
@@ -139,14 +143,17 @@
                  centers[i++] = im[centery * imW + centerx];
                  centers[i++] = im[imW * imH + centery * imW + centerx];
                  centers[i++] = im[2 * imW * imH + centery * imW + centerx];
+                 
+                 cluster_params[j++] = 10*10; // THIS IS THE VARIABLE VALUE OF M, just start with 5
+                 cluster_params[j++] = regionSize * regionSize;
              }
          }
      }
 
 
-     // compute energy of clustering assignment
-     function compute_slic_energy(im, segmentation, centers, factor, numRegionsX, numRegionsY, regionSize, imW, imH){
-
+     // compute energy of clustering assignment, update segmentation assignments, color_distance_map and spatial_distance_map
+     function compute_slic_energy(im, segmentation, mc_map, ms_map, centers, cluster_params, factor, numRegionsX, numRegionsY, regionSize, imW, imH){
+         
          var energy = 0;
          // assign pixels to centers
          for (var y = 0 ; y < imH ; ++y) {
@@ -156,8 +163,8 @@
                  var up, vp ;
                  var minDistance = Infinity;
 
-                 for (var vp = Math.max(0, v) ; vp <= Math.min(numRegionsY-1, v+1) ; vp++) {
-                     for (var up = Math.max(0, u) ; up <= Math.min(numRegionsX-1, u+1) ; up++) {
+                 for (vp = Math.max(0, v) ; vp <= Math.min(numRegionsY-1, v+1) ; vp++) {
+                     for (up = Math.max(0, u) ; up <= Math.min(numRegionsX-1, u+1) ; up++) {
                          var region = up  + vp * numRegionsX ;
                          var centerx = centers[5 * region + 0] ;
                          var centery = centers[5 * region + 1] ;
@@ -169,10 +176,13 @@
                          var dB = im[2 * imW * imH + y*imW + x] - centers[5*region + 4]; // B
                          var appearance = dR * dR + dG * dG + dB * dB;
 
-                         var distance = appearance + factor * spatial ;
+                         var distance = Math.sqrt( appearance / cluster_params[region*2 + 0] + spatial / cluster_params[region*2 + 1] );
+                         //var distance = Math.sqrt( appearance + spatial * factor);
                          if (minDistance > distance) {
                              minDistance = distance ;
                              segmentation[y*imW + x] = region;
+                             mc_map[y*imW + x] = appearance;
+                             ms_map[y*imW + x] = spatial;
                          }
                      }
                  }
@@ -275,6 +285,8 @@
                  }
              }
          }
+
+
          // restore base 0 indexing of the regions
          for (pixel = 0 ; pixel < numPixels ; pixel++){
              cleaned[pixel] -- ;
@@ -283,7 +295,71 @@
          memcpy(segmentation, cleaned, numPixels);
      }
 
+     function update_cluster_params(segmentation, mc_map, ms_map, cluster_params){
+         var mc = new Float32Array(cluster_params.length/2);
+         var ms = new Float32Array(cluster_params.length/2);
+         for (var i = 0; i<segmentation.length; i++){
+             var region = segmentation[i];
+             if (mc[region] < mc_map[region]){
+                 mc[region] = mc_map[region];
+                 cluster_params[region*2+0] = mc_map[region];
+             }
+             if (ms[region] < ms_map[region]){
+                 ms[region] = ms_map[region];
+                 cluster_params[region*2+1] = ms_map[region];
+             }
+         }
+     }
 
+
+
+     function assign_superpixel_label(im, segmentation, mc_map, ms_map, distance_map, centers, cluster_params, factor, numRegionsX, numRegionsY, regionSize, imW, imH){
+
+         var S = regionSize;
+         memset(distance_map, distance_map.length, Infinity);
+         for (var region =0; region<numRegionsX * numRegionsY; region ++){
+             var cx = Math.round( centers[region*5+0] );
+             var cy = Math.round( centers[region*5+1] );
+
+             for (var y = Math.max(0, cy - S);  y < Math.min(imH, cy + S); y++){
+                 for (var x = Math.max(0, cx - S); x < Math.min(imW, cx + S); x++){
+
+                     var spatial = (x - cx) * (x - cx) + (y - cy) * (y - cy) ;
+
+                     var dR = im[y*imW + x] - centers[5*region + 2]; // R
+                     var dG = im[imW * imH + y*imW + x] - centers[5*region + 3]; // G
+                     var dB = im[2 * imW * imH + y*imW + x] - centers[5*region + 4]; // B
+                     var appearance = dR * dR + dG * dG + dB * dB;
+
+                     var distance = Math.sqrt( appearance / cluster_params[region*2 + 0] + spatial / cluster_params[region*2 + 1] );
+                     //var distance = Math.sqrt( appearance + spatial * factor);
+                     if (distance < distance_map[y*imW + x]){
+                         distance_map[y*imW + x] = distance;
+                         segmentation[y*imW + x] = region;
+                     }
+                 }
+             }
+         }
+         // update the max distance of color and space
+         for (var y = 0; y < imH; y++){
+           for (var x = 0; x < imW; x++){
+             if (cluster_params[segmentation[y*imW + x]*2] < mc_map[y*imW + x]) // color
+               cluster_params[segmentation[y*imW + x]*2] = mc_map[y*imW + x];
+             if (cluster_params[segmentation[y*imW + x]*2+1] < ms_map[y*imW + x]) // space
+               cluster_params[segmentation[y*imW + x]*2+1] = ms_map[y*imW + x];
+           }
+         }
+     }
+
+
+     function compute_residual_error(prev_centers, curr_centers){
+         var error = 0.;
+         for (var i=0; i<prev_centers.length; i++){
+             var d = prev_centers[i] - curr_centers[i];
+             error += Math.sqrt(d*d);
+         }
+         return error;
+     }
 
      function slic_segmentation(imageData, options){
 
@@ -297,32 +373,38 @@
 
          var edgeMap = new Float32Array(numPixels);
          var masses = new Array(numPixels);
-         var centers = new Float32Array((2+3)*numRegions); // 2 (geometric: x & y) and 3 (RGB or Lab)
+         var curr_centers = new Float32Array((2+3)*numRegions); // 2 (geometric: x & y) and 3 (RGB or Lab)
+         var new_centers = new Float32Array((2+3)*numRegions); // 2 (geometric: x & y) and 3 (RGB or Lab)
+         var cluster_params = new Float32Array(2*numRegions);
+         var mc_map = new Float32Array(numPixels);
+         var ms_map = new Float32Array(numPixels);
+         var distance_map = new Float32Array(numPixels);
 
          // first, convert RGB 2 Lab space
-         //var XYZ = RGB2XYZ(imageData.data, imageData.width, imageData.height);
-
-
          var Lab = xyz2lab(rgb2xyz(imageData.data, imageData.width, imageData.height), imageData.width, imageData.height);
 
          // compute edge
          compute_edge(Lab, edgeMap, imageData.width, imageData.height);
 
          /* initialize K-Means Centers*/
-         initialize_kmeans_centers(Lab, edgeMap, centers, numRegionsX, numRegionsY, regionSize, imageData.width, imageData.height);
+         initialize_kmeans_centers(Lab, edgeMap, curr_centers, cluster_params, numRegionsX, numRegionsY, regionSize, imageData.width, imageData.height);
 
 
-         var previousEnergy = Infinity;
-         var startingEnergy = 0;
+
          var maxNumIterations = 10;
          var factor = options.regularization * options.regularization / (regionSize * regionSize);
          var segmentation = new Int32Array(numPixels);
          var iter;
+
+         // VLFEAT implementation
+         /*
+         var previousEnergy = Infinity;
+         var startingEnergy = 0;
          for (iter = 0; iter < maxNumIterations; iter++){
              // do superpixel assignment and energy computation
-             var energy = compute_slic_energy(Lab, segmentation, centers, factor, numRegionsX, numRegionsY, regionSize, imageData.width, imageData.height);
+             var energy = compute_slic_energy(Lab, segmentation, mc_map, ms_map, curr_centers, cluster_params, factor, numRegionsX, numRegionsY, regionSize, imageData.width, imageData.height);
 
-             if (iter == 0){
+             if (iter === 0){
                  startingEnergy = energy;
              }
              else{
@@ -334,10 +416,37 @@
 
              // recompute centers
              memset(masses, numPixels, 0);
-             memset(centers, (2+3)*numRegions, 0);
+             memset(curr_centers, (2+3)*numRegions, 0);
              // compute centers
-             compute_centers(Lab, segmentation, masses, centers, numRegions, imageData.width, imageData.height);
+             compute_centers(Lab, segmentation, masses, curr_centers, numRegions, imageData.width, imageData.height);
+
+             // update maximum spatial and color distances [1]
+             update_cluster_params(segmentation, mc_map, ms_map, cluster_params);
+         }*/
+
+
+         // SLICO implementation: "SLIC Superpixels Compared to State-of-the-art Superpixel Methods"
+         for (iter =0; iter < maxNumIterations; iter++){
+             // do assignment
+             assign_superpixel_label(Lab, segmentation, mc_map, ms_map, distance_map, curr_centers, cluster_params, factor, numRegionsX, numRegionsY, regionSize, imageData.width, imageData.height);
+             // update maximum spatial and color distances [1]
+             update_cluster_params(segmentation, mc_map, ms_map, cluster_params);
+
+             // compute new centers
+             memset(masses, numPixels, 0);
+             memset(new_centers, (2+3)*numRegions, 0);
+             compute_centers(Lab, segmentation, masses, new_centers, numRegions, imageData.width, imageData.height);
+
+             // compute residual error of assignment
+             var error = compute_residual_error(curr_centers, new_centers);
+
+             if (error < 1e-5){
+                 break;
+             }
+             memcpy(curr_centers, new_centers, numRegions * 5);
          }
+
+
 
          eliminate_small_regions(segmentation, options.minRegionSize, numPixels, imageData.width, imageData.height);
          return segmentation;
@@ -434,13 +543,14 @@
      // Public API.
      window.SLIC = function(imageURL, options) {
                  if (typeof options === 'undefined') options = {};
-                 if (options.regionSize == undefined) options.regionSize = 40; // the lateral side of a rectangle superpixel in pixels
-                 if (options.regularization == undefined) options.regularization = 1;
-                 if (options.minRegionSize == undefined) options.minRegionSize = options.regionSize * options.regionSize / 2; // width or high should be larger than 20 pixels
+                 if (options.regionSize === undefined) options.regionSize = 40 // the lateral side of a rectangle superpixel in pixels
+                 if (options.minRegionSize === undefined) options.minRegionSize = options.regionSize * options.regionSize / 4; // width or high should be larger than 20 pixels
                  var image = new Image();
-                 image.src = imageURL;
-                 image.crossOrigin = null;
+                 image.crossOrigin="Anonymous";
                  image.onerror = function() { onErrorImageLoad(image); };
                  image.onload = function() { onSuccessImageLoad(image, options); };
+                 image.src = imageURL;
+                 
+
              };
  }).call(this);
