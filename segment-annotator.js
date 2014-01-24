@@ -537,8 +537,6 @@ SLICSegmentAnnotator = function(imageURL, options){
 var _this = this;
   SLICSegmentation(imageURL, {
     regionSize: options.regionSize,
-    regularization: options.regularization,
-    minRegionSize: options.minRegionSize,
     callback: function(result) {
       SegmentAnnotator.call(_this, result, options);
     }
