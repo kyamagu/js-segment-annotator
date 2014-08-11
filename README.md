@@ -62,7 +62,7 @@ internally calls `SLICSegmentation` to generate segmentation.
    * `container` - Container DOM element to place the annotation tool. e.g.,
                    `document.getElementById('annotator')`. By default, the
                    tool is appended at the end of the `document.body`.
-   * `highlightAlpha` - Alpha value for the segment under mouse pointer. It 
+   * `highlightAlpha` - Alpha value for the segment under mouse pointer. It
                          takes a number between 0 to 255. Default 128.
    * `backgroundColor` - Color of the background of the annotation image.
                           Default [192, 192, 192].
@@ -94,7 +94,7 @@ internally calls `PFSegmentation` to generate segmentation.
    * `container` - Container DOM element to place the annotation tool. e.g.,
                    `document.getElementById('annotator')`. By default, the
                    tool is appended at the end of the `document.body`.
-   * `highlightAlpha` - Alpha value for the segment under mouse pointer. It 
+   * `highlightAlpha` - Alpha value for the segment under mouse pointer. It
                          takes a number between 0 to 255. Default 128.
    * `backgroundColor` - Color of the background of the annotation image.
                           Default [192, 192, 192].
@@ -290,6 +290,28 @@ Drawing the segmentation result to a canvas.
         document.body.appendChild(canvas);
       }
     });
+
+Exporting data
+--------------
+
+Check `index.html` for how to design a UI.
+
+_Matlab_
+
+To load the exported annotation from Matlab, download the JSON and byte
+encoding tools for Matlab.
+
+ * https://github.com/kyamagu/matlab-json
+ * http://www.mathworks.com/matlabcentral/fileexchange/39526-byte-encoding-utilities
+
+Then, do the following.
+
+    annotation = json.read(‘export.json’);
+    png_data = base64decode(strrep(annotation.annotation, 'data:image/png;base64,’, ‘’));
+    segmentation_map = imdecode(png_data, ‘png’);
+
+The resulting `segmentation_map` contains an index of label at each pixel.
+Read the `annotation.labels` field to get information about labels.
 
 Contributing
 ------------
