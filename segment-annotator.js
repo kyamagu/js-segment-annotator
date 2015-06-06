@@ -28,13 +28,17 @@ SegmentAnnotator = function(segmentation, options) {
   this._initializePixelsIndex();
   this._initializeBackgroundLayer();
   this._initializeColorMap(options.labels);
-  this._initializeAnnotations(options.annotationURL, function() {
-    this._initializeImageLayer();
-    this._initializeAnnotationLayer();
-    this._initializeHighlightLayer();
-    if (options.onload)
-      options.onload.call(this);
-  });
+  
+  // otherwise the closure won't capture the right this
+  var self = this;
+  
+  this._initializeAnnotations(options.annotation, function() {
+  self._initializeImageLayer();
+  self._initializeAnnotationLayer();
+  self._initializeHighlightLayer();
+  if (options.onload)
+    options.onload.call(self);
+});
 };
 
 // Disable input.
@@ -342,8 +346,9 @@ SegmentAnnotator.prototype._initializeAnnotations = function(url, callback) {
       this.annotations[i] = 0;
     callback.call(this);
   }
-  else
+  else {
     this._importAnnotation(url, callback);
+  }
   return this;
 };
 
@@ -484,8 +489,10 @@ SegmentAnnotator.prototype._setAnnotationAlpha = function(alpha, atBoundary) {
                         index !== indexMap[i * width + j + 1] ||
                         index !== indexMap[(i - 1) * width + j] ||
                         index !== indexMap[(i + 1) * width + j]);
+      // if current pixel is part of the boundary
       if (isBoundary && atBoundary)
         data[4 * (i * width + j) + 3] = alpha;
+      // if current pixel is part of the superpixel, then fill it
       else if (!isBoundary && !atBoundary)
         data[4 * (i * width + j) + 3] = alpha;
     }
