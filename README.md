@@ -72,6 +72,36 @@ internally calls `SLICSegmentation` to generate segmentation.
 
 The class inherits from the `SegmentAnnotator` class.
 
+### PreSegmentAnnotator
+
+    new PreSegmentAnnotator(imageURL, options)
+
+A class object to generate an annotation canvas from the given image URL. It
+internally calls `PreSegmentation` to retrieve a segmentation mask from a PNG 
+file.
+
+ * `imageURL` - URL of an image to annotate. (Caution: do not use a large
+                 image with more than 600px each side.)
+ * `options` - Optional input arguments. Following options are accepted.
+   * `onload` - Function to be called upon intialization. The annotator object
+                is accessible by `this`.
+   * `annotation` - **Required** URL to an existing annotation PNG image. Use the
+                    output of `annotator.getAnnotation`.
+   * `labels` - Labels to annotate. It can be an array of strings or an array
+                of objects that has `name` with optional `color` field. For
+                example, `{ name: 'background', color: [255, 255, 255] }`.
+                You may use the output of `annotator.getLabels()`. By default,
+                `['background', 'foreground']` is specified.
+   * `container` - Container DOM element to place the annotation tool. e.g.,
+                   `document.getElementById('annotator')`. By default, the
+                   tool is appended at the end of the `document.body`.
+   * `highlightAlpha` - Alpha value for the segment under mouse pointer. It
+                         takes a number between 0 to 255. Default 128.
+   * `backgroundColor` - Color of the background of the annotation image.
+                          Default [192, 192, 192].
+
+The class inherits from the `SegmentAnnotator` class.
+
 ### PFSegmentAnnotator
 
     new PFSegmentAnnotator(imageURL, options)
@@ -209,6 +239,26 @@ based on the VLFeat implementation. The function takes the following options.
  * `regionSize` - Parameter of superpixel size
  * `regularization` - Regularization parameter. See paper.
  * `minRegionSize` - Minimum segment size in pixels.
+ * `toDataURL` - Callback function to receive the result as a data URL.
+ * `callback` - Function to be called on finish. The function takes a single
+                argument of result object that contains following fields.
+    * `width` - Width of the image in pixels.
+    * `height` - Height of the image in pixels.
+    * `size` - Number of segments.
+    * `indexMap` - Int32Array of `width * height` elements containing
+                   segment index for each pixel location. The segment index
+                   at pixel `(i, j)` is `indexMap(i * width + j)`, where
+                   `i` is the y coordinate of the pixel and `j` is the x
+                   coordinate.
+
+### PreSegmentation
+
+    PreSegmentation(imageURL, options)
+
+Javascript implementation of an image segmentation mask loader.
+
+The function takes the following options.
+
  * `toDataURL` - Callback function to receive the result as a data URL.
  * `callback` - Function to be called on finish. The function takes a single
                 argument of result object that contains following fields.
