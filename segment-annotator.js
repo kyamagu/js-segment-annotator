@@ -552,3 +552,22 @@ var _this = this;
 
 // Set up inheritance.
 SLICSegmentAnnotator.prototype = Object.create(SegmentAnnotator.prototype);
+
+
+/** Create an annotation tool based on offline pre-segmentation.
+ *
+ * Include pre-segmentation.js before use.
+ */
+PreSegmentAnnotator = function(imageURL, options){
+var _this = this;
+  PreSegmentation(imageURL, {
+    regionSize: options.regionSize,
+    annotation: options.annotation,
+    callback: function(result) {
+      SegmentAnnotator.call(_this, result, options);
+    }
+  });
+};
+
+// Set up inheritance.
+PreSegmentAnnotator.prototype = Object.create(SegmentAnnotator.prototype);
