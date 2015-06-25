@@ -77,7 +77,7 @@ The class inherits from the `SegmentAnnotator` class.
     new PreSegmentAnnotator(imageURL, options)
 
 A class object to generate an annotation canvas from the given image URL. It
-internally calls `PreSegmentation` to retrieve a segmentation mask from a PNG 
+internally calls `PreSegmentation` to retrieve a segmentation mask from a PNG
 file.
 
  * `imageURL` - URL of an image to annotate. (Caution: do not use a large
@@ -255,10 +255,11 @@ based on the VLFeat implementation. The function takes the following options.
 
     PreSegmentation(imageURL, options)
 
-Javascript implementation of an image segmentation mask loader.
+Existing mask loader.
 
 The function takes the following options.
 
+ * `annotation` - Existing annotation URL (required).
  * `toDataURL` - Callback function to receive the result as a data URL.
  * `callback` - Function to be called on finish. The function takes a single
                 argument of result object that contains following fields.
