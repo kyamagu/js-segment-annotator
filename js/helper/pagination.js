@@ -7,7 +7,8 @@
  *
  * Copyright 2015  Kota Yamaguchi
  */
-define(function () {
+define(["./util"],
+function (util) {
   function Pagination(count, params) {
     var i, anchor,
         page = parseInt(params.page || 0, 10),
@@ -32,7 +33,7 @@ define(function () {
         anchor = document.createElement("a");
         params.page = page - 1;
         if (page > 0)
-          anchor.href = makeQueryParams(params);
+          anchor.href = util.makeQueryParams(params);
         anchor.appendChild(document.createTextNode("Prev"));
         container.appendChild(anchor);
         container.appendChild(document.createTextNode(" "));
@@ -41,7 +42,7 @@ define(function () {
         anchor = document.createElement("a");
         params.page = index[i];
         if (index[i] !== page)
-          anchor.href = makeQueryParams(params);
+          anchor.href = util.makeQueryParams(params);
         anchor.appendChild(document.createTextNode(index[i]));
         container.appendChild(anchor);
         container.appendChild(document.createTextNode(" "));
@@ -52,7 +53,7 @@ define(function () {
         anchor = document.createElement("a");
         params.page = page + 1;
         if (page < pages - 1)
-          anchor.href = makeQueryParams(params);
+          anchor.href = util.makeQueryParams(params);
         anchor.appendChild(document.createTextNode("Next"));
         container.appendChild(anchor);
       }
