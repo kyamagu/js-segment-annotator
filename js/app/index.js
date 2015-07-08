@@ -22,11 +22,9 @@ function(Pagination, Viewer, util) {
       select.appendChild(option);
     }
     select.onchange = function(event) {
-      if (event.target.value === "all")
-        delete params.label;
-      else
-        params.label = event.target.value;
-      window.location = util.makeQueryParams(params);
+      window.location = util.makeQueryParams(params, {
+        label: (event.target.value === "all") ? null : event.target.value
+      });
     };
     container.appendChild(select);
     return container;

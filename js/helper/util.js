@@ -25,15 +25,30 @@ define(function () {
     return params;
   }
 
+  // Create a unique array.
+  function unique() {
+    var uniqueArray = [];
+    for (var i = 0; i < arguments.length; ++i) {
+      var array = arguments[i];
+      for (var j = 0; j < array.length; ++j) {
+        if (uniqueArray.indexOf(array[j]) < 0)
+          uniqueArray.push(array[j]);
+      }
+    }
+    return uniqueArray;
+  }
+
   // Create query params from an object.
   function makeQueryParams(params, updates) {
     params = params || {};
     updates = updates || {};
     var queryString = "?";
-    var keys = Object.keys(params);
+    var keys = unique(Object.keys(params), Object.keys(updates));
     for (var i = 0; i < keys.length; ++i) {
       var value = updates[keys[i]];
-      if (typeof value === "undefined")
+      if (value === null)
+        continue;
+      else if (typeof value === "undefined")
         value = params[keys[i]];
       queryString = queryString +
                     encodeURIComponent(keys[i]) + "=" +

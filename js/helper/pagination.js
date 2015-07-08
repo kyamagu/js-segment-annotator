@@ -31,18 +31,16 @@ function (util) {
       var container = document.createElement(options.nodeType || "p");
       {
         anchor = document.createElement("a");
-        params.page = page - 1;
         if (page > 0)
-          anchor.href = util.makeQueryParams(params);
+          anchor.href = util.makeQueryParams(params, { page: page - 1 });
         anchor.appendChild(document.createTextNode("Prev"));
         container.appendChild(anchor);
         container.appendChild(document.createTextNode(" "));
       }
       for (i = 0; i < index.length; ++i) {
         anchor = document.createElement("a");
-        params.page = index[i];
         if (index[i] !== page)
-          anchor.href = util.makeQueryParams(params);
+          anchor.href = util.makeQueryParams(params, { page: index[i] });
         anchor.appendChild(document.createTextNode(index[i]));
         container.appendChild(anchor);
         container.appendChild(document.createTextNode(" "));
@@ -51,9 +49,8 @@ function (util) {
       }
       {
         anchor = document.createElement("a");
-        params.page = page + 1;
         if (page < pages - 1)
-          anchor.href = util.makeQueryParams(params);
+          anchor.href = util.makeQueryParams(params, { page: page + 1 });
         anchor.appendChild(document.createTextNode("Next"));
         container.appendChild(anchor);
       }
