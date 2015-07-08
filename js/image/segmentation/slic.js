@@ -12,39 +12,65 @@
  * API
  * ---
  *
- *    SLICSegmentation(imageURL, options)
+ *    SLIC(imageURL, options)
  *
  * The function takes the following options.
  * * `regionSize` - Parameter of superpixel size
- * * `regularization` - Regularization parameter. See paper.
  * * `minRegionSize` - Minimum segment size in pixels.
- * * `toDataURL` - Callback function to receive the result as a data URL.
- * * `callback` - Function to be called on finish. The function takes a single
- *                argument of result object that contains following fields.
- *    * `width` - Width of the image in pixels.
- *    * `height` - Height of the image in pixels.
- *    * `size` - Number of segments.
- *    * `indexMap` - Int32Array of `width * height` elements containing
- *                   segment index for each pixel location. The segment index
- *                   at pixel `(i, j)` is `indexMap(i * width + j)`, where
- *                   `i` is the y coordinate of the pixel and `j` is the x
- *                   coordinate.
  *
- * LongLong Yu 2014.
+ * Copyright 2014  LongLong Yu.
  */
-(function() {
+define(["./base"], function(BaseSegmentation) {
+  // SLIC segmentation.
+  function SLIC(imageData, options) {
+    BaseSegmentation.call(this, imageData, options);
+    options = options || {};
+    this.regionSize = options.regionSize || 16;
+    this.minRegionSize = options.minRegionSize ||
+                         Math.round(this.regionSize * 0.8);
+    this.maxIterations = options.maxIterations || 10;
+    this._compute();
+  }
+
+  SLIC.prototype = Object.create(BaseSegmentation.prototype);
+
+  SLIC.prototype.finer = function () {
+    var newSize = Math.max(5, Math.round(this.regionSize / Math.sqrt(2.0)));
+    if (newSize !== this.regionSize) {
+      this.regionSize = newSize;
+      this.minRegionSize = Math.round(newSize * 0.8);
+      this._compute();
+    }
+  };
+
+  SLIC.prototype.coarser = function () {
+    var newSize = Math.min(640, Math.round(this.regionSize * Math.sqrt(2.0)));
+    if (newSize !== this.regionSize) {
+      this.regionSize = newSize;
+      this.minRegionSize = Math.round(newSize * 0.8);
+      this._compute();
+    }
+  };
+
+  SLIC.prototype._compute = function () {
+    this.result = computeSLICSegmentation(this.imageData,
+                                          this.regionSize,
+                                          this.minRegionSize,
+                                          this.maxIterations);
+  };
+
   // Convert RGBA into XYZ color space. rgba: Red Green Blue Alpha.
   function rgb2xyz(rgba, w, h) {
     var xyz = new Float32Array(3*w*h),
         gamma = 2.2;
     for (var i = 0; i<w*h; i++) {
       // 1.0 / 255.9 = 0.00392156862.
-      var r = parseFloat(rgba[4*i+0]) * 0.00392156862,
-          g = parseFloat(rgba[4*i+1]) * 0.00392156862,
-          b = parseFloat(rgba[4*i+2]) * 0.00392156862;
-          r = Math.pow(r, gamma);
-          g = Math.pow(g, gamma);
-          b = Math.pow(b, gamma);
+      var r = rgba[4*i+0] * 0.00392156862,
+          g = rgba[4*i+1] * 0.00392156862,
+          b = rgba[4*i+2] * 0.00392156862;
+      r = Math.pow(r, gamma);
+      g = Math.pow(g, gamma);
+      b = Math.pow(b, gamma);
       xyz[i] = (r * 0.4887180 + g * 0.310680 + b * 0.2006020);
       xyz[i + w*h] = (r * 0.1762040 + g * 0.812985 + b * 0.0108109);
       xyz[i + 2*w*h] = (g * 0.0102048 + b * 0.989795);
@@ -60,11 +86,11 @@
       else
         return 7.78706891568 * x + 0.1379310336;
     }
-    var xw = 1.0/3.0,
-        yw = 1.0/3.0,
+    var xw = 1.0 / 3.0,
+        yw = 1.0 / 3.0,
         Yw = 1.0,
         Xw = xw / yw,
-        Zw = (1-xw-yw) / yw * Yw,
+        Zw = (1-xw-yw) / (yw * Yw),
         ix = 1.0 / Xw,
         iy = 1.0 / Yw,
         iz = 1.0 / Zw,
@@ -89,7 +115,7 @@
               b = image[k*w*h + y*w + x+1],
               c = image[k*w*h + (y+1)*w + x],
               d = image[k*w*h + (y-1)*w + x];
-          edgeMap[y*w +x] = edgeMap[y*w +x] + (a-b) * (a-b) + (c-d) * (c-d);
+          edgeMap[y*w +x] += Math.pow(a-b, 2) + Math.pow(c-d, 2);
         }
       }
     }
@@ -121,8 +147,8 @@
         x = Math.max(Math.min(x, imW-1),0);
         y = Math.max(Math.min(y, imH-1),0);
         // Search in a 3x3 neighbourhood the smallest edge response.
-        for (yp = Math.max(0, y-1); yp <= Math.min(imH-1, y+1); yp++) {
-          for (xp = Math.max(0, x-1); xp <= Math.min(imW-1, x+1); xp++) {
+        for (yp = Math.max(0, y-1); yp <= Math.min(imH-1, y+1); ++yp) {
+          for (xp = Math.max(0, x-1); xp <= Math.min(imW-1, x+1); ++xp) {
             var thisEdgeValue = edgeMap[yp * imW + xp];
             if (thisEdgeValue < minEdgeValue) {
               minEdgeValue = thisEdgeValue;
@@ -196,7 +222,7 @@
         xp,
         yp,
         direction;
-    for (pixel = 0; pixel < numPixels; pixel++) {
+    for (pixel = 0; pixel < numPixels; ++pixel) {
       if (cleaned[pixel]) continue;
       label = segmentation[pixel];
       numExpanded = 0;
@@ -325,15 +351,42 @@
     return error;
   }
 
+  // Remap label indices.
+  function remapLabels(segmentation) {
+    var map = {},
+        index = 0;
+    for (var i = 0; i < segmentation.length; ++i) {
+      var label = segmentation[i];
+      if (map[label] === undefined)
+        map[label] = index++;
+      segmentation[i] = map[label];
+    }
+    return index;
+  }
+
+  // Encode labels in RGB.
+  function encodeLabels(segmentation, data) {
+    for (i = 0; i < segmentation.length; ++i) {
+      var value = Math.floor(segmentation[i]);
+      data[4 * i + 0] = value & 255;
+      data[4 * i + 1] = (value >>> 8) & 255;
+      data[4 * i + 2] = (value >>> 16) & 255;
+      data[4 * i + 3] = 255;
+    }
+  }
+
   // Compute SLIC Segmentation.
-  function computeSLICSegmentation(imageData, options) {
-    var imWidth = imageData.width,
+  function computeSLICSegmentation(imageData,
+                                   regionSize,
+                                   minRegionSize,
+                                   maxIterations) {
+    var i,
+        imWidth = imageData.width,
         imHeight = imageData.height,
-        numRegionsX = parseInt(imWidth / options.regionSize, 10),
-        numRegionsY = parseInt(imHeight / options.regionSize, 10),
-        numRegions = parseInt(numRegionsX * numRegionsY, 10),
-        numPixels = parseInt(imWidth * imHeight, 10),
-        regionSize = options.regionSize,
+        numRegionsX = Math.floor(imWidth / regionSize),
+        numRegionsY = Math.floor(imHeight / regionSize),
+        numRegions = Math.floor(numRegionsX * numRegionsY),
+        numPixels = Math.floor(imWidth * imHeight),
         edgeMap = new Float32Array(numPixels),
         masses = new Array(numPixels),
         // 2 (geometric: x & y) and 3 (RGB or Lab)
@@ -343,13 +396,10 @@
         mcMap = new Float32Array(numPixels),
         msMap = new Float32Array(numPixels),
         distanceMap = new Float32Array(numPixels),
-        labData = xyz2lab(rgb2xyz(imageData.data,
-                                  imageData.width,
-                                  imageData.height),
-                          imageData.width,
-                          imageData.height);
+        xyzData = rgb2xyz(imageData.data, imWidth, imHeight),
+        labData = xyz2lab(xyzData, imWidth, imHeight);
     // Compute edge.
-    computeEdge(labData, edgeMap, imageData.width, imageData.height);
+    computeEdge(labData, edgeMap, imWidth, imHeight);
     // Initialize K-Means Centers.
     initializeKmeansCenters(labData,
                             edgeMap,
@@ -358,14 +408,13 @@
                             numRegionsX,
                             numRegionsY,
                             regionSize,
-                            imageData.width,
-                            imageData.height);
-    var maxNumIterations = 10,
-        segmentation = new Int32Array(numPixels);
+                            imWidth,
+                            imHeight);
+    var segmentation = new Int32Array(numPixels);
     /** SLICO implementation: "SLIC Superpixels Compared to State-of-the-art
      * Superpixel Methods"
      */
-    for (var iter =0; iter < maxNumIterations; ++iter) {
+    for (var iter = 0; iter < maxIterations; ++iter) {
       // Do assignment.
       assignSuperpixelLabel(labData,
                             segmentation,
@@ -377,12 +426,11 @@
                             numRegionsX,
                             numRegionsY,
                             regionSize,
-                            imageData.width,
-                            imageData.height);
+                            imWidth,
+                            imHeight);
       // Update maximum spatial and color distances [1].
       updateClusterParams(segmentation, mcMap, msMap, clusterParams);
       // Compute new centers.
-      var i;
       for (i = 0; i < masses.length; ++i)
         masses[i] = 0;
       for (i = 0; i < newCenters.length; ++i)
@@ -392,8 +440,8 @@
                      masses,
                      newCenters,
                      numRegions,
-                     imageData.width,
-                     imageData.height);
+                     imWidth,
+                     imHeight);
       // Compute residual error of assignment.
       var error = computeResidualError(currentCenters, newCenters);
       if (error < 1e-5)
@@ -402,90 +450,23 @@
         currentCenters[i] = newCenters[i];
     }
     eliminateSmallRegions(segmentation,
-                          options.minRegionSize,
+                          minRegionSize,
                           numPixels,
-                          imageData.width,
-                          imageData.height);
-    return segmentation;
+                          imWidth,
+                          imHeight);
+    // Refresh the canvas.
+    var result = new ImageData(imWidth, imHeight);
+    result.numSegments = remapLabels(segmentation);
+    encodeLabels(segmentation, result.data);
+    return result;
   }
 
-  // Remap label indices.
-  function remapLabels(segmentation) {
-    var map = {},
-        index = 0;
-    for (var i = 0; i < segmentation.length; ++i) {
-      var label = segmentation[i];
-      if (map[label] === undefined)
-        map[label] = index++;
-        segmentation[i] = map[label];
-    }
-    return index;
-  }
+  // function max(array) {
+  //   var value = array[0];
+  //   for (var i = 0; i < array.length; ++i)
+  //     value = Math.max(array[i], value);
+  //   return value;
+  // }
 
-  // Compute segmentation.
-  function computeSegmentation(imageData, options) {
-    var segmentation = computeSLICSegmentation(imageData, options),
-        numSegments = remapLabels(segmentation);
-    if (options.callback) {
-      var rgbData = new Uint8Array(imageData.data);
-      options.callback({
-        width: imageData.width,
-        height: imageData.height,
-        size: numSegments,
-        indexMap: segmentation,
-        rgbData: rgbData
-        });
-      }
-    if (options.toDataURL)
-      getDataURL(imageData.width, imageData.height, indexMap, options);
-  }
-
-  // Convert to Data URL.
-  function getDataURL(width, height, indexMap, options) {
-    var canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    var context = canvas.getContext('2d'),
-        imageData = context.createImageData(width, height),
-        data = imageData.data;
-    for (var i = 0; i < indexMap.length; ++i) {
-      var value = indexMap[i];
-      data[4 * i + 0] = value & 255;
-      data[4 * i + 1] = (value >>> 8) & 255;
-      data[4 * i + 2] = (value >>> 16) & 255;
-    }
-    context.putImageData(imageData, 0, 0);
-    options.toDataURL(canvas.toDataURL());
-  }
-
-  // When image is loaded.
-  function onSuccessImageLoad(image, options) {
-    var canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    var context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0);
-    var imageData = context.getImageData(0, 0, image.width, image.height),
-        segmentation = computeSegmentation(imageData, options);
-  }
-
-  // When image is invalid.
-  function onErrorImageLoad() {
-    alert('Failed to load an image: ' + image.src);
-  }
-
-  // Public API.
-  window.SLICSegmentation = function(imageURL, options) {
-    if (typeof options === 'undefined') options = {};
-    // the lateral side of a rectangle superpixel in pixels.
-    if (options.regionSize === undefined) options.regionSize = 40;
-    // width or high should be larger than 20 pixels
-    if (options.minRegionSize === undefined)
-      options.minRegionSize = options.regionSize * options.regionSize / 4;
-    var image = new Image();
-    image.src = imageURL;
-    image.crossOrigin = null;
-    image.onerror = function() { onErrorImageLoad(image); };
-    image.onload = function() { onSuccessImageLoad(image, options); };
-  };
-}).call(this);
+  return SLIC;
+});

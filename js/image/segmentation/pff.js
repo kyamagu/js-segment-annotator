@@ -8,69 +8,55 @@
  * API
  * ---
  *
- *    PFSegmentation(imageURL, options)
+ *    new PFF(imageData, options)
  *
  * The function takes the following options.
  * * `sigma` - Parameter for Gaussian pre-smoothing. Default 0.5.
  * * `threshold` - Threshold value of the algorithm. Default 500.
  * * `minSize` - Minimum segment size in pixels. Default 20.
- * * `toDataURL` - callback function to receive the result as a data URL.
- * * `callback` - function to be called on finish. The function takes a single
- *                argument of result object that contains following fields.
- *    * `width` - Width of the image in pixels.
- *    * `height` - Height of the image in pixels.
- *    * `size` - Number of segments.
- *    * `indexMap` - Int32Array of `width * height` elements containing
- *                   segment index for each pixel location. The segment index
- *                   at pixel `(i, j)` is `indexMap(i * width + j)`, where
- *                   `i` is the y coordinate of the pixel and `j` is the x
- *                   coordinate.
  *
- * Example
- * -------
- *
- * Drawing the result to a canvas.
- *
- *    function colorRandomRGB(size, indexMap, imageData) {
- *      var width = imageData.width;
- *      var height = imageData.height;
- *      var rgbData = imageData.data;
- *      var colormap = new Uint8Array(size * 3);
- *      for (var i = 0; i < colormap.length; ++i)
- *        colormap[i] = Math.round(255 * Math.random());
- *      for (var i = 0; i < height; ++i) {
- *        for (var j = 0; j < width; ++j) {
- *          var index = indexMap[i * width + j];
- *          rgbData[4 * (i * width + j) + 0] = colormap[3 * index + 0];
- *          rgbData[4 * (i * width + j) + 1] = colormap[3 * index + 1];
- *          rgbData[4 * (i * width + j) + 2] = colormap[3 * index + 2];
- *          rgbData[4 * (i * width + j) + 3] = 255;
- *        }
- *      }
- *    }
- *
- *    PFSegmentation('/path/to/image.jpg', {
- *      sigma: 1.0,
- *      threshold: 500,
- *      minSize: 100,
- *      callback: function(result) {
- *        var canvas = document.createElement('canvas');
- *        canvas.width = result.width;
- *        canvas.height = result.height;
- *        var context = canvas.getContext('2d');
- *        var imageData = context.getImageData(0,
- *                                             0,
- *                                             canvas.width,
- *                                             canvas.height);
- *        colorRandomRGB(result.size, result.indexMap, imageData);
- *        context.putImageData(imageData, 0, 0);
- *        document.body.appendChild(canvas);
- *      }
- *    });
- *
- * Kota Yamaguchi 2013.
+ * Copyright 2015  Kota Yamaguchi
  */
-(function() {
+define(["./base"], function(BaseSegmentation) {
+  function PFF(imageData, options) {
+    BaseSegmentation.call(this, imageData, options);
+    options = options || {};
+    this.sigma = options.sigma || Math.sqrt(2.0);
+    this.threshold = options.threshold || 500;
+    this.minSize = options.minSize || 20;
+    this.result = this._compute();
+  }
+
+  PFF.prototype = Object.create(BaseSegmentation.prototype);
+
+  // Compute segmentation.
+  PFF.prototype._compute = function () {
+    var smoothedImage = new ImageData(this.imageData.width,
+                                      this.imageData.height);
+    smoothedImage.data.set(this.imageData.data);
+    smoothImage(smoothedImage, this.sigma);
+    var universe = segmentGraph(smoothedImage, this.threshold, this.minSize),
+        indexMap = createIndexMap(universe, smoothedImage),
+        result = new ImageData(smoothedImage.width, smoothedImage.height);
+    encodeLabels(indexMap, result.data);
+    result.numSegments = universe.nodes;
+    return result;
+  };
+
+  // Finer.
+  PFF.prototype.finer = function (scale) {
+    this.sigma /= (scale || Math.sqrt(2));
+    this.threshold /= (scale || Math.sqrt(2));
+    this.result = this._compute();
+  };
+
+  // Coarser.
+  PFF.prototype.coarser = function (scale) {
+    this.sigma *= (scale || Math.sqrt(2.0));
+    this.threshold *= (scale || Math.sqrt(2.0));
+    this.result = this._compute();
+  };
+
   // Create a normalized Gaussian filter.
   function createGaussian(sigma) {
     sigma = Math.max(sigma, 0.01);
@@ -118,7 +104,7 @@
     // Vertical filter.
     for (i = 0; i < height; ++i) {
       for (j = 0; j < width; ++j) {
-        for (k = 0; k < Math.min(4, 3); ++k) {
+        for (k = 0; k < 3; ++k) {
           sum = filter[0] * temporary[4 * (i * width + j) + k];
           for (l = 1; l < filter.length; ++l) {
             sum += filter[l] * (
@@ -139,19 +125,19 @@
   }
 
   // Create an edge structure.
-  function createEdges(imageData, options) {
+  function createEdges(imageData) {
     var width = imageData.width,
         height = imageData.height,
         rgbData = imageData.data,
         edgeSize = 4 * width * height - 3 * width - 3 * height + 2,
         index = 0,
         edges = {
-      a: new Int32Array(edgeSize),
-      b: new Int32Array(edgeSize),
-      w: new Float32Array(edgeSize)
-    },
-    x1,
-    x2;
+          a: new Int32Array(edgeSize),
+          b: new Int32Array(edgeSize),
+          w: new Float32Array(edgeSize)
+        },
+        x1,
+        x2;
     for (var i = 0; i < height; ++i) {
       for (var j = 0; j < width; ++j) {
         if (j < width - 1) {
@@ -280,13 +266,9 @@
   }
 
   // Segment a graph.
-  function segmentGraph(imageData, options) {
-    var c = options.threshold,
-        minSize = options.minSize,
-        edges = createEdges(imageData, options),
-        a,
-        b,
-        i;
+  function segmentGraph(imageData, c, minSize) {
+    var edges = createEdges(imageData),
+        a, b, i;
     sortEdgesByWeights(edges);
     var universe = createUniverse(imageData.width * imageData.height, c);
     // Bottom-up merge.
@@ -313,7 +295,7 @@
   }
 
   // Create an index map.
-  function createIndexMap(universe, imageData, options) {
+  function createIndexMap(universe, imageData) {
     var width = imageData.width,
         height = imageData.height,
         indexMap = new Int32Array(width * height),
@@ -333,69 +315,15 @@
     return indexMap;
   }
 
-  // Compute segmentation.
-  function computeSegmentation(imageData, options) {
-    smoothImage(imageData, options.sigma);
-    var universe = segmentGraph(imageData, options),
-        indexMap = createIndexMap(universe, imageData, options);
-    if (options.callback) {
-      var rgbData = new Uint8Array(imageData.data);
-      options.callback({
-        width: imageData.width,
-        height: imageData.height,
-        size: universe.nodes,
-        indexMap: indexMap,
-        rgbData: rgbData
-      });
-    }
-    if (options.toDataURL)
-      getDataURL(imageData.width, imageData.height, indexMap, options);
-  }
-
-  // Convert to Data URL.
-  function getDataURL(width, height, indexMap, options) {
-    var canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    var context = canvas.getContext('2d'),
-        imageData = context.createImageData(width, height),
-        data = imageData.data;
-    for (var i = 0; i < indexMap.length; ++i) {
+  function encodeLabels(indexMap, data) {
+    for (i = 0; i < indexMap.length; ++i) {
       var value = indexMap[i];
       data[4 * i + 0] = value & 255;
       data[4 * i + 1] = (value >>> 8) & 255;
       data[4 * i + 2] = (value >>> 16) & 255;
+      data[4 * i + 3] = 255;
     }
-    context.putImageData(imageData, 0, 0);
-    options.toDataURL(canvas.toDataURL());
   }
 
-  // When image is loaded.
-  function onSuccessImageLoad(image, options) {
-    var canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    var context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0);
-    var imageData = context.getImageData(0, 0, image.width, image.height),
-        segmentation = computeSegmentation(imageData, options);
-  }
-
-  // When image is invalid.
-  function onErrorImageLoad() {
-    alert('Failed to load an image: ' + image.src);
-  }
-
-  // Public API.
-  window.PFSegmentation = function(imageURL, options) {
-    if (typeof options === 'undefined') options = {};
-    if (options.sigma === undefined) options.sigma = 0.5;
-    if (options.threshold === undefined) options.threshold = 500;
-    if (options.minSize === undefined) options.minSize = 20;
-    var image = new Image();
-    image.src = imageURL;
-    image.crossOrigin = null;
-    image.onerror = function() { onErrorImageLoad(image); };
-    image.onload = function() { onSuccessImageLoad(image, options); };
-  };
-}).call(this);
+  return PFF;
+});
