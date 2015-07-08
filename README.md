@@ -40,6 +40,15 @@ be omitted. Place the JSON file inside the `data/` directory.
 
 Open a Web browser and point to the `index.html`.
 
+Know issues
+-----------
+
+_Browser incompatibility_
+
+A segmentation result can greatly differ due to the difference in Javascript
+implementation across Web browsers. The difference stems from numerical
+precision of floating point numbers, and there is no easy way to produce the
+exact same result across browsers.
 
 Matlab tips
 -----------
