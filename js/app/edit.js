@@ -198,7 +198,10 @@ function(Layer, Annotator, util) {
         spacer2 = document.createElement("div"),
         denoiseButton = document.createElement("div"),
         spacer3 = document.createElement("div"),
-        exportButton = document.createElement("input");
+        manualParagraph = document.createElement("p"),
+        spacer4 = document.createElement("div"),
+        exportButton = document.createElement("input"),
+        manualText;
     exportButton.type = "submit";
     exportButton.value = "export";
     exportButton.className = "edit-sidebar-submit";
@@ -222,6 +225,12 @@ function(Layer, Annotator, util) {
       annotator.denoise();
     });
     spacer3.className = "edit-sidebar-spacer";
+    manualParagraph.appendChild(document.createTextNode("Mouse control"));
+    manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createTextNode("Left: mark"));
+    manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createTextNode("Right: pick label"));
+    spacer4.className = "edit-sidebar-spacer";
     container.className = "edit-sidebar";
     container.appendChild(labelPicker);
     container.appendChild(spacer1);
@@ -229,7 +238,9 @@ function(Layer, Annotator, util) {
     container.appendChild(redoButton);
     container.appendChild(spacer2);
     container.appendChild(denoiseButton);
-    container.appendChild(spacer3);
+    //container.appendChild(spacer3);
+    container.appendChild(manualParagraph);
+    //container.appendChild(spacer4);
     container.appendChild(exportButton);
     return container;
   }
