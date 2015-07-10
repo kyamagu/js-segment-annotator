@@ -38,7 +38,8 @@ be omitted. Place the JSON file inside the `data/` directory.
       ]
     }
 
-Open a Web browser and point to the `index.html`.
+Then edit `main.js` to point to this JSON file. Open a Web browser and visit
+`index.html`.
 
 Know issues
 -----------
