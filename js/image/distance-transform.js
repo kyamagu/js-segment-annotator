@@ -6,7 +6,8 @@
  *
  * Copyright 2015  Kota Yamaguchi
  */
-define(function () {
+define(["./compat"],
+function (compat) {
   var INF = 1e20;
 
   function distanceTransform1D(f, n, flag) {
@@ -89,7 +90,8 @@ define(function () {
 
   // For debugging.
   function intensity2rgb(intensity) {
-    var newImageData = new ImageData(intensity.width, intensity.height),
+    var newImageData = compat.createImageData(intensity.width,
+                                              intensity.height),
         data = intensity.data,
         newData = newImageData.data;
     for (var i = 0; i < data.length; ++i) {

@@ -2,8 +2,9 @@
  *
  * Copyright 2015  Kota Yamaguchi
  */
-define(["./morph/max-filter"],
-function (maxFilter) {
+define(["./compat",
+        "./morph/max-filter"],
+function (compat, maxFilter) {
   function decodeIndexImage(imageData) {
     var indexImage = {
       width: imageData.width,
@@ -20,7 +21,7 @@ function (maxFilter) {
   }
 
   function encodeIndexImage(indexImage) {
-    var imageData = new ImageData(indexImage.width, indexImage.height);
+    var imageData = compat.createImageData(indexImage.width, indexImage.height);
     for (var i = 0; i < indexImage.length; ++i) {
       var offset = 4 * i,
           value = indexImage.data[i];

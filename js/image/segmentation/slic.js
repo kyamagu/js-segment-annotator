@@ -20,7 +20,9 @@
  *
  * Copyright 2014  LongLong Yu.
  */
-define(["./base"], function(BaseSegmentation) {
+define(["./base",
+        "../compat"],
+function(BaseSegmentation, compat) {
   // SLIC segmentation.
   function SLIC(imageData, options) {
     BaseSegmentation.call(this, imageData, options);
@@ -455,7 +457,7 @@ define(["./base"], function(BaseSegmentation) {
                           imWidth,
                           imHeight);
     // Refresh the canvas.
-    var result = new ImageData(imWidth, imHeight);
+    var result = compat.createImageData(imWidth, imHeight);
     result.numSegments = remapLabels(segmentation);
     encodeLabels(segmentation, result.data);
     return result;

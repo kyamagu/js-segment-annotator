@@ -14,8 +14,9 @@
 define(["./base",
         "./binary-heap-priority-queue",
         "../canny",
+        "../compat",
         "../distance-transform"],
-function (BaseSegmentation, PriorityQueue, canny, distanceTransform) {
+function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
   // Constructor for the segmentation configuration.
   function WatershedSegmentation(imageData, options) {
     BaseSegmentation.call(this, imageData, options);

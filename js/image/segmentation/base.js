@@ -3,11 +3,12 @@
  *
  * Copyright 2015  Kota Yamaguchi
  */
-define(function () {
+define(["../compat"],
+function (compat) {
   function BaseSegmentation(imageData, options) {
     if (!imageData instanceof ImageData)
       throw "Invalid ImageData";
-    this.imageData = new ImageData(imageData.width, imageData.height);
+    this.imageData = compat.createImageData(imageData.width, imageData.height);
     this.imageData.data.set(imageData.data);
   }
 

@@ -17,7 +17,9 @@
  *
  * Copyright 2015  Kota Yamaguchi
  */
-define(["./base"], function(BaseSegmentation) {
+define(["./base",
+        "../compat"],
+function(BaseSegmentation, compat) {
   function PFF(imageData, options) {
     BaseSegmentation.call(this, imageData, options);
     options = options || {};
@@ -31,13 +33,14 @@ define(["./base"], function(BaseSegmentation) {
 
   // Compute segmentation.
   PFF.prototype._compute = function () {
-    var smoothedImage = new ImageData(this.imageData.width,
-                                      this.imageData.height);
+    var smoothedImage = compat.createImageData(this.imageData.width,
+                                               this.imageData.height);
     smoothedImage.data.set(this.imageData.data);
     smoothImage(smoothedImage, this.sigma);
     var universe = segmentGraph(smoothedImage, this.threshold, this.minSize),
         indexMap = createIndexMap(universe, smoothedImage),
-        result = new ImageData(smoothedImage.width, smoothedImage.height);
+        result = compat.createImageData(smoothedImage.width,
+                                        smoothedImage.height);
     encodeLabels(indexMap, result.data);
     result.numSegments = universe.nodes;
     return result;
