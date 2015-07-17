@@ -9,7 +9,7 @@ Javascript image annotation tool based on image segmentation.
 
 A browser must support HTML canvas to use this tool.
 
-There is an [online demo](http://kyamagu.github.io/js-segment-annotator/).
+There is an [online demo](http://kyamagu.github.io/js-segment-annotator/?view=index).
 
 Importing data
 --------------
