@@ -32,6 +32,8 @@ function(Layer, segmentation, morph) {
     this.onchange = options.onchange || null;
     this.onrightclick = options.onrightclick || null;
     this.onleftclick = options.onleftclick || null;
+    this.onhighlight = options.onhighlight || null;
+    this.onmousemove = options.onmousemove || null;
     this._createLayers(options);
     this._initializeHistory(options);
     var annotator = this;
@@ -311,15 +313,18 @@ function(Layer, segmentation, morph) {
     function updateIfActive(event) {
       var offset = annotator._getClickOffset(event),
           superpixelData = annotator.layers.superpixel.imageData.data,
+          annotationData = annotator.layers.annotation.imageData.data,
           superpixelIndex = _getEncodedLabel(superpixelData, offset),
-          pixels = annotator.pixelIndex[superpixelIndex];
+          pixels = annotator.pixelIndex[superpixelIndex],
+          existingLabel = _getEncodedLabel(annotationData, offset);
       annotator._updateHighlight(pixels);
+      if (typeof annotator.onmousemove === "function") {
+        annotator.onmousemove.call(annotator, existingLabel);
+      }
       if (mousestate.down) {
         if (mousestate.button == 2 &&
             typeof annotator.onrightclick === "function") {
-          var annotationData = annotator.layers.annotation.imageData.data;
-          annotator.onrightclick.call(annotator,
-                                      _getEncodedLabel(annotationData, offset));
+          annotator.onrightclick.call(annotator, existingLabel);
         }
         else {
           annotator._updateAnnotation(pixels, annotator.currentLabel);
@@ -332,6 +337,9 @@ function(Layer, segmentation, morph) {
     canvas.addEventListener('mouseup', updateIfActive);
     canvas.addEventListener('mouseleave', function (event) {
       annotator._updateHighlight(null);
+      if (typeof annotator.onmousemove === "function") {
+        annotator.onmousemove.call(annotator, null);
+      }
     });
     canvas.addEventListener('mousedown', function (event) {
       mousestate.down = true;
@@ -436,6 +444,8 @@ function(Layer, segmentation, morph) {
     }
     this.layers.visualization.render();
     this.layers.boundary.render();
+    if (typeof this.onhighlight === "function")
+      this.onhighlight.call(this);
   };
 
   Annotator.prototype._fillPixels = function (pixels, labels) {

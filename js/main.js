@@ -17,7 +17,7 @@ function(indexPage, editPage, colormap, util) {
       }) :
       [[255, 255, 255],
        [226, 196, 196],
-       [64, 32, 32]].concat(colormap.create("hhsv", {
+       [64, 32, 32]].concat(colormap.create("hsv", {
         size: labels.length - 3
       }));
   }

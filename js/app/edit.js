@@ -293,6 +293,17 @@ function(Layer, Annotator, util) {
     return pickButton;
   }
 
+  // Hightlight legend labels.
+  function highlightLabel(label) {
+    var highlightClass = "edit-sidebar-button-highlight",
+        elements = document.getElementsByClassName(highlightClass);
+    for (var i = 0; i < elements.length; ++i)
+      elements[i].classList.remove(highlightClass);
+    var pickButton = document.getElementById("label-" + label + "-button");
+    if (pickButton)
+      pickButton.classList.add(highlightClass);
+  }
+
   // Create the label picker button.
   function createLabelPicker(params, data, annotator) {
     var container = document.createElement("div");
@@ -398,7 +409,8 @@ function(Layer, Annotator, util) {
           },
           onrightclick: function (label) {
             document.getElementById("label-" + label + "-button").click();
-          }
+          },
+          onmousemove: highlightLabel
         }),
         imageLayer = new Layer(data.imageURLs[id], {
           width: params.width,

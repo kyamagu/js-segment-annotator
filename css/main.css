@@ -82,6 +82,9 @@
 .edit-sidebar-button-enabled {
   background-color: #ccc;
 }
+.edit-sidebar-button-highlight {
+  background-color: #aaa;
+}
 .edit-sidebar-legend-colorbox {
   background-color: white;
   border: 1px solid gray;
