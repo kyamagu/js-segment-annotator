@@ -22,6 +22,7 @@ function(Layer, segmentation, morph) {
     if (typeof imageURL !== "string")
       throw "Invalid imageURL";
     this.colormap = options.colormap || [[255, 255, 255], [255, 0, 0]];
+    this.boundaryColor = options.boundaryColor || [255, 255, 255];
     this.boundaryAlpha = options.boundaryAlpha || 127;
     this.visualizationAlpha = options.visualizationAlpha || 144;
     this.highlightAlpha = options.highlightAlpha ||
@@ -354,8 +355,8 @@ function(Layer, segmentation, morph) {
     var boundaryLayer = this.layers.boundary;
     boundaryLayer.copy(this.layers.superpixel);
     boundaryLayer.computeEdgemap({
-      foreground: [255, 255, 255, this.boundaryAlpha],
-      background: [255, 255, 255, 0]
+      foreground: this.boundaryColor.concat(this.boundaryAlpha),
+      background: this.boundaryColor.concat(0)
     });
     boundaryLayer.render();
   };
@@ -423,23 +424,33 @@ function(Layer, segmentation, morph) {
   Annotator.prototype._updateHighlight = function (pixels) {
     var visualizationData = this.layers.visualization.imageData.data,
         boundaryData = this.layers.boundary.imageData.data,
+        annotationData = this.layers.annotation.imageData.data,
         i,
+        color,
         offset;
     if (this.currentPixels !== null) {
       for (i = 0; i < this.currentPixels.length; ++i) {
         offset = this.currentPixels[i];
+        color = this.colormap[_getEncodedLabel(annotationData, offset)];
+        visualizationData[offset + 0] = color[0];
+        visualizationData[offset + 1] = color[1];
+        visualizationData[offset + 2] = color[2];
         visualizationData[offset + 3] = this.visualizationAlpha;
-        if (boundaryData[offset + 3])
-          boundaryData[offset + 3] = this.boundaryAlpha;
       }
     }
     this.currentPixels = pixels;
     if (this.currentPixels !== null) {
       for (i = 0; i < pixels.length; ++i) {
         offset = pixels[i];
-        visualizationData[offset + 3] = this.highlightAlpha;
-        if (boundaryData[offset + 3])
-          boundaryData[offset + 3] = this.highlightAlpha;
+        if (boundaryData[offset + 3]) {
+          visualizationData[offset + 0] = this.boundaryColor[0];
+          visualizationData[offset + 1] = this.boundaryColor[1];
+          visualizationData[offset + 2] = this.boundaryColor[2];
+          visualizationData[offset + 3] = this.highlightAlpha;
+        }
+        else {
+          visualizationData[offset + 3] = this.highlightAlpha;
+        }
       }
     }
     this.layers.visualization.render();
