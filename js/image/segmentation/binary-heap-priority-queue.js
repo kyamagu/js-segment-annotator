@@ -23,7 +23,7 @@ define([], function () {
     this.data = (options.initialValues) ? options.initialValues.slice(0) : [];
     this.length = this.data.length;
     if (this.data.length > 0)
-      for (var i = 1; i <= data.length; ++i)
+      for (var i = 1; i <= this.data.length; ++i)
         this._bubbleUp(i);
   }
 

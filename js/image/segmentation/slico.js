@@ -413,7 +413,7 @@ function(BaseSegmentation, compat) {
     this.doRGBtoLABConversion(this.imageData);
     if (this.perturb)
       this.detectLabEdges();
-    this.getLABXYSeedsForGivenStepSize(step, this.perturb);
+    this.getLABXYSeedsForGivenStepSize(this.step, this.perturb);
     this.performSuperpixelSegmentationVariableSandM(kLabels,
                                                     this.step,
                                                     this.maxIterations);
@@ -422,7 +422,7 @@ function(BaseSegmentation, compat) {
       var nlabels = fillArray(new Int32Array(size), -1);
       numlabels = this.enforceLabelConnectivity(kLabels,
                                                 nlabels,
-                                                size / (step * step));
+                                                size / (this.step * this.estep));
       for (var i = 0; i < size; ++i)
         kLabels[i] = nlabels[i];
     }
