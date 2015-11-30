@@ -6,7 +6,7 @@
 define(["../compat"],
 function (compat) {
   function BaseSegmentation(imageData, options) {
-    if (!imageData instanceof ImageData)
+    if (!(imageData instanceof ImageData))
       throw "Invalid ImageData";
     this.imageData = compat.createImageData(imageData.width, imageData.height);
     this.imageData.data.set(imageData.data);
