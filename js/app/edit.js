@@ -344,7 +344,7 @@ function(Layer, Annotator, util) {
         firstOption = document.createElement("option");
     firstOption.appendChild(document.createTextNode("Change to"));
     select.appendChild(firstOption);
-    for (i = 0; i < data.labels.length; ++i) {
+    for (var i = 0; i < data.labels.length; ++i) {
       if (i !== index) {
         var option = document.createElement("option");
         option.value = i;

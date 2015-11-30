@@ -455,7 +455,7 @@ function(BaseSegmentation, compat) {
         data = fillArray(imageData.data, 255),
         color = [255, 0, 0],
         dx8 = [-1, -1,  0,  1, 1, 1, 0, -1],
-        dy8 = [ 0, -1, -1, -1, 0, 1, 1,  1];
+        dy8 = [ 0, -1, -1, -1, 0, 1, 1,  1],
         istaken = fillArray(new Uint8Array(this.width * this.height), 0);
     var mainindex = 0;
     for (var j = 0; j < this.height; ++j) {

@@ -223,6 +223,7 @@ function(BaseSegmentation, compat) {
         y,
         xp,
         yp,
+        neighbor,
         direction;
     for (pixel = 0; pixel < numPixels; ++pixel) {
       if (cleaned[pixel]) continue;
@@ -368,7 +369,7 @@ function(BaseSegmentation, compat) {
 
   // Encode labels in RGB.
   function encodeLabels(segmentation, data) {
-    for (i = 0; i < segmentation.length; ++i) {
+    for (var i = 0; i < segmentation.length; ++i) {
       var value = Math.floor(segmentation[i]);
       data[4 * i + 0] = value & 255;
       data[4 * i + 1] = (value >>> 8) & 255;

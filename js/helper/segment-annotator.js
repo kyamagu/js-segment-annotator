@@ -464,7 +464,7 @@ function(Layer, segmentation, morph) {
       throw "Invalid fill: " + pixels.length + " !== " + labels.length;
     var annotationData = this.layers.annotation.imageData.data,
         visualizationData = this.layers.visualization.imageData.data;
-    for (i = 0; i < pixels.length; ++i) {
+    for (var i = 0; i < pixels.length; ++i) {
       var offset = pixels[i],
           label = labels[i],
           color = this.colormap[label];
