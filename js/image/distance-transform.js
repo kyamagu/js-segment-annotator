@@ -51,7 +51,7 @@ function (compat) {
         height = distanceMap.height,
         data = distanceMap.data,
         f = new Float32Array(Math.max(width, height)),
-        x, y, offset;
+        x, y, d;
     // Column transform.
     for (x = 0; x < width; ++x) {
       for (y = 0; y < height; ++y)

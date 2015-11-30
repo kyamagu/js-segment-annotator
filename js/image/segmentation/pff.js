@@ -319,7 +319,7 @@ function(BaseSegmentation, compat) {
   }
 
   function encodeLabels(indexMap, data) {
-    for (i = 0; i < indexMap.length; ++i) {
+    for (var i = 0; i < indexMap.length; ++i) {
       var value = indexMap[i];
       data[4 * i + 0] = value & 255;
       data[4 * i + 1] = (value >>> 8) & 255;

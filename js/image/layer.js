@@ -86,7 +86,7 @@ define(function() {
     this.canvas.height = imageData.height;
     var context = this.canvas.getContext("2d");
     this._setImageSmoothing(context, options);
-    context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height);
+    context.drawImage(imageData, 0, 0, this.canvas.width, this.canvas.height);
     this.imageData = context.getImageData(0, 0,
                                           this.canvas.width,
                                           this.canvas.height);
