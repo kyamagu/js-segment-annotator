@@ -336,7 +336,7 @@ function(Layer, segmentation, morph) {
     }
     canvas.addEventListener('mousemove', updateIfActive);
     canvas.addEventListener('mouseup', updateIfActive);
-    canvas.addEventListener('mouseleave', function (event) {
+    canvas.addEventListener('mouseleave', function () {
       annotator._updateHighlight(null);
       if (typeof annotator.onmousemove === "function") {
         annotator.onmousemove.call(annotator, null);
@@ -346,7 +346,7 @@ function(Layer, segmentation, morph) {
       mousestate.down = true;
       mousestate.button = event.button;
     });
-    window.addEventListener('mouseup', function (event) {
+    window.addEventListener('mouseup', function () {
       mousestate.down = false;
     });
   };
@@ -412,9 +412,7 @@ function(Layer, segmentation, morph) {
           (event.pageY - container.offsetTop + container.scrollTop) *
           (container.offsetHeight / container.scrollHeight)
           ),
-        data = this.layers.superpixel.imageData.data,
         offset;
-    var canvas = this.layers.image.canvas;
     x = Math.max(Math.min(x, this.layers.visualization.canvas.width - 1), 0);
     y = Math.max(Math.min(y, this.layers.visualization.canvas.height - 1), 0);
     offset = 4 * (y * this.layers.visualization.canvas.width + x);

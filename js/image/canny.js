@@ -71,7 +71,7 @@ function (compat) {
         newIntensity = createIntensityData(width + 2 * size[0],
                                            height + 2 * size[1]),
         newData = newIntensity.data,
-        i, j, k;
+        i, j;
     for (i = 0; i < newIntensity.height; ++i) {
       var y = (i < size[1]) ? size[1] - i:
               (i >= height + size[1]) ? 2 * height - size[1] + 1 - i :

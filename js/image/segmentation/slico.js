@@ -194,7 +194,6 @@ function(BaseSegmentation, compat) {
   SLICO.prototype.getLABXYSeedsForGivenK = function(K, perturb) {
     var size = Math.floor(this.width * this.height);
     var step = Math.sqrt(parseFloat(size) / parseFloat(K));
-    var T = Math.round(step);
     var xoff = Math.round(step / 2);
     var yoff = Math.round(step / 2);
     var n = 0;
@@ -269,7 +268,6 @@ function(BaseSegmentation, compat) {
         distvec = fillArray(new Float64Array(size), Infinity),
         maxlab = fillArray(new Float64Array(numK), Math.pow(10, 2)),
         maxxy = fillArray(new Float64Array(numK), Math.pow(step, 2)),
-        invxywt = 1.0 / Math.pow(step, 2),
         i, j, k, n, x, y;
     while (numIter < maxIterations) {
       ++numIter;
@@ -293,7 +291,6 @@ function(BaseSegmentation, compat) {
                          Math.pow(b - this.kSeedsB[n], 2);
             distxy[i] = Math.pow(x - this.kSeedsX[n], 2) +
                         Math.pow(y - this.kSeedsY[n], 2);
-            // var dist = distlab[i] / maxlab[n] + distxy[i] * invxywt;
             var dist = distlab[i] / maxlab[n] + distxy[i] / maxxy[n];
             if (dist < distvec[i]) {
               distvec[i] = dist;
@@ -323,14 +320,14 @@ function(BaseSegmentation, compat) {
       fillArray(clusterSize, 0);
       for (j = 0; j < size; ++j) {
         var temp = kLabels[j];
-        if (kLabels[j] < 0)
+        if (temp < 0)
           throw "Assertion error";
-        sigmal[kLabels[j]] += this.lvec[j];
-        sigmaa[kLabels[j]] += this.avec[j];
-        sigmab[kLabels[j]] += this.bvec[j];
-        sigmax[kLabels[j]] += (j % this.width);
-        sigmay[kLabels[j]] += (j / this.width);
-        clusterSize[kLabels[j]]++;
+        sigmal[temp] += this.lvec[j];
+        sigmaa[temp] += this.avec[j];
+        sigmab[temp] += this.bvec[j];
+        sigmax[temp] += (j % this.width);
+        sigmay[temp] += (j / this.width);
+        clusterSize[temp]++;
       }
       for (k = 0; k < numK; ++k) {
         if (clusterSize[k] <= 0)

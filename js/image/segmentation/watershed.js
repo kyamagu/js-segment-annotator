@@ -47,7 +47,7 @@ function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
   WatershedSegmentation.prototype = Object.create(BaseSegmentation.prototype);
 
   // Change the segmentation resolution.
-  WatershedSegmentation.prototype.finer = function (scale) {
+  WatershedSegmentation.prototype.finer = function () {
     if (this.currentConfig > 0) {
       --this.currentConfig;
       if (this.imageData)
@@ -56,7 +56,7 @@ function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
   };
 
   // Change the segmentation resolution.
-  WatershedSegmentation.prototype.coarser = function (scale) {
+  WatershedSegmentation.prototype.coarser = function () {
     if (this.currentConfig < this.sigmaRange.length - 1) {
       ++this.currentConfig;
       if (this.imageData)
@@ -73,7 +73,7 @@ function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
       kernelTail: this.kernelRange[this.currentConfig],
       sigma: this.sigmaRange[this.currentConfig],
       lowThreshold: this.lowThreshold,
-      highThreshold: this.highThreshold,
+      highThreshold: this.highThreshold
     });
     var seeds = this._findLocalMaxima(distanceTransform(edge));
     var labels = new Int32Array(edge.data.length);
@@ -127,7 +127,7 @@ function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
     var data = intensity.data,
         maximaMap = new Uint8Array(data.length),
         offsets = [],
-        i, k, offset, neighbors, flag;
+        k, offset, neighbors, flag;
     for (offset = 0; offset < data.length; ++offset) {
       neighbors = this.neighborMap8.get(offset);
       flag = true;
@@ -189,7 +189,7 @@ function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
   WatershedSegmentation.prototype.erode = function (target, labels) {
     var offsets = [],
         updates = {},
-        i, j, offset;
+        offset;
     for (offset = 0; offset < labels.length; ++offset)
       if (labels[offset] === target)
         offsets.push(offset);
@@ -235,7 +235,7 @@ function (BaseSegmentation, PriorityQueue, canny, compat, distanceTransform) {
   WatershedSegmentation.prototype._removeSmallRegions =
       function (labels) {
     var histogram = {},
-        i, offset, label, updates;
+        offset, label, updates;
     for (offset = 0; offset < labels.length; ++offset) {
       label = labels[offset];
       if (histogram[label])
