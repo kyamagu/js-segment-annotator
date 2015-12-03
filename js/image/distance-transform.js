@@ -10,7 +10,7 @@ define(["./compat"],
 function (compat) {
   var INF = 1e20;
 
-  function distanceTransform1D(f, n, flag) {
+  function distanceTransform1D(f, n) {
     var d = new Float32Array(n),
         v = new Int32Array(n),
         z = new Float32Array(n + 1),
@@ -64,7 +64,7 @@ function (compat) {
     for (y = 0; y < height; ++y) {
       for (x = 0; x < width; ++x)
         f[x] = data[y * width + x];
-      d = distanceTransform1D(f, width, true);
+      d = distanceTransform1D(f, width);
       for (x = 0; x < width; ++x)
         data[y * width + x] = d[x];
     }
@@ -89,20 +89,20 @@ function (compat) {
   }
 
   // For debugging.
-  function intensity2rgb(intensity) {
-    var newImageData = compat.createImageData(intensity.width,
-                                              intensity.height),
-        data = intensity.data,
-        newData = newImageData.data;
-    for (var i = 0; i < data.length; ++i) {
-      var value = Math.round(data[i]);
-      newData[4 * i] = 255 & value;
-      newData[4 * i + 1] = 255 & (value >> 8);
-      newData[4 * i + 2] = 255 & (value >> 16);
-      newData[4 * i + 3] = 255;
-    }
-    return newImageData;
-  }
+  // function intensity2rgb(intensity) {
+  //   var newImageData = compat.createImageData(intensity.width,
+  //                                             intensity.height),
+  //       data = intensity.data,
+  //       newData = newImageData.data;
+  //   for (var i = 0; i < data.length; ++i) {
+  //     var value = Math.round(data[i]);
+  //     newData[4 * i] = 255 & value;
+  //     newData[4 * i + 1] = 255 & (value >> 8);
+  //     newData[4 * i + 2] = 255 & (value >> 16);
+  //     newData[4 * i + 3] = 255;
+  //   }
+  //   return newImageData;
+  // }
 
   return distanceTransform;
 });
