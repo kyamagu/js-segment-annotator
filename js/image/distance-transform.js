@@ -89,20 +89,20 @@ function (compat) {
   }
 
   // For debugging.
-  function intensity2rgb(intensity) {
-    var newImageData = compat.createImageData(intensity.width,
-                                              intensity.height),
-        data = intensity.data,
-        newData = newImageData.data;
-    for (var i = 0; i < data.length; ++i) {
-      var value = Math.round(data[i]);
-      newData[4 * i] = 255 & value;
-      newData[4 * i + 1] = 255 & (value >> 8);
-      newData[4 * i + 2] = 255 & (value >> 16);
-      newData[4 * i + 3] = 255;
-    }
-    return newImageData;
-  }
+  // function intensity2rgb(intensity) {
+  //   var newImageData = compat.createImageData(intensity.width,
+  //                                             intensity.height),
+  //       data = intensity.data,
+  //       newData = newImageData.data;
+  //   for (var i = 0; i < data.length; ++i) {
+  //     var value = Math.round(data[i]);
+  //     newData[4 * i] = 255 & value;
+  //     newData[4 * i + 1] = 255 & (value >> 8);
+  //     newData[4 * i + 2] = 255 & (value >> 16);
+  //     newData[4 * i + 3] = 255;
+  //   }
+  //   return newImageData;
+  // }
 
   return distanceTransform;
 });

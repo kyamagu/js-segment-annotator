@@ -46,20 +46,20 @@ function (compat) {
     return intensity;
   }
 
-  function intensity2rgb(intensity) {
-    var newImageData = compat.createImageData(intensity.width,
-                                              intensity.height),
-        data = intensity.data,
-        newData = newImageData.data;
-    for (var i = 0; i < data.length; ++i) {
-      var value = Math.max(Math.min(Math.round(255 * data[i]), 255), 0);
-      newData[4 * i] = value;
-      newData[4 * i + 1] = value;
-      newData[4 * i + 2] = value;
-      newData[4 * i + 3] = 255;
-    }
-    return newImageData;
-  }
+  // function intensity2rgb(intensity) {
+  //   var newImageData = compat.createImageData(intensity.width,
+  //                                             intensity.height),
+  //       data = intensity.data,
+  //       newData = newImageData.data;
+  //   for (var i = 0; i < data.length; ++i) {
+  //     var value = Math.max(Math.min(Math.round(255 * data[i]), 255), 0);
+  //     newData[4 * i] = value;
+  //     newData[4 * i + 1] = value;
+  //     newData[4 * i + 2] = value;
+  //     newData[4 * i + 3] = 255;
+  //   }
+  //   return newImageData;
+  // }
 
   function padImage(intensity, size) {
     size = size || [0, 0];

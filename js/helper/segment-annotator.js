@@ -521,24 +521,24 @@ function(Layer, segmentation, morph) {
     return array;
   }
 
-  function _findMostFrequent(annotationData, pixels) {
-    var histogram = {},
-        j;
-    for (j = 0; j < pixels.length; ++j) {
-      var label = _getEncodedLabel(annotationData, pixels[j]);
-      histogram[label] = (histogram[label]) ? histogram[label] + 1 : 1;
-    }
-    var maxFrequency = 0,
-        majorLabel = 0;
-    for (j in histogram) {
-      var frequency = histogram[j];
-      if (frequency > maxFrequency) {
-        maxFrequency = frequency;
-        majorLabel = j;
-      }
-    }
-    return majorLabel;
-  }
+  // function _findMostFrequent(annotationData, pixels) {
+  //   var histogram = {},
+  //       j;
+  //   for (j = 0; j < pixels.length; ++j) {
+  //     var label = _getEncodedLabel(annotationData, pixels[j]);
+  //     histogram[label] = (histogram[label]) ? histogram[label] + 1 : 1;
+  //   }
+  //   var maxFrequency = 0,
+  //       majorLabel = 0;
+  //   for (j in histogram) {
+  //     var frequency = histogram[j];
+  //     if (frequency > maxFrequency) {
+  //       maxFrequency = frequency;
+  //       majorLabel = j;
+  //     }
+  //   }
+  //   return majorLabel;
+  // }
 
   function _getEncodedLabel(array, offset) {
     return array[offset] |
