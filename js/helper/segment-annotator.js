@@ -281,10 +281,10 @@ function(Layer, segmentation, morph) {
         canvas.height = this.height;
       }
     }
-    this.innerContainer.style.width = this.width;
-    this.innerContainer.style.height = this.height;
-    this.container.style.width = this.width;
-    this.container.style.height = this.height;
+    this.innerContainer.style.width = this.width + "px";
+    this.innerContainer.style.height = this.height + "px";
+    this.container.style.width = this.width + "px";
+    this.container.style.height = this.height + "px";
   };
 
   Annotator.prototype._initializeHistory = function (options) {
@@ -403,13 +403,13 @@ function(Layer, segmentation, morph) {
   };
 
   Annotator.prototype._getClickOffset = function (event) {
-    var container = this.container,
+    var container = this.container, containerRect = container.getBoundingClientRect(),
         x = Math.round(
-          (event.pageX - container.offsetLeft + container.scrollLeft) *
+          (event.pageX - containerRect.left + container.scrollLeft) *
           (container.offsetWidth / container.scrollWidth)
           ),
         y = Math.round(
-          (event.pageY - container.offsetTop + container.scrollTop) *
+          (event.pageY - containerRect.top + container.scrollTop) *
           (container.offsetHeight / container.scrollHeight)
           ),
         offset;
