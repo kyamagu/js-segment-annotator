@@ -403,13 +403,16 @@ function(Layer, segmentation, morph) {
   };
 
   Annotator.prototype._getClickOffset = function (event) {
-    var container = this.container, containerRect = container.getBoundingClientRect(),
+    var container = this.container,
+        containerRect = container.getBoundingClientRect(), win = window, docElem = document.documentElement,
+        offsetLeft = containerRect.left + (win.pageXOffset || docElem.scrollLeft) - (docElem.clientLeft || 0),
+        offsetTop = containerRect.top + (win.pageYOffset || docElem.scrollTop) - (docElem.clientTop || 0),
         x = Math.round(
-          (event.pageX - containerRect.left + container.scrollLeft) *
+          (event.pageX - offsetLeft + container.scrollLeft) *
           (container.offsetWidth / container.scrollWidth)
           ),
         y = Math.round(
-          (event.pageY - containerRect.top + container.scrollTop) *
+          (event.pageY - offsetTop + container.scrollTop) *
           (container.offsetHeight / container.scrollHeight)
           ),
         offset;
