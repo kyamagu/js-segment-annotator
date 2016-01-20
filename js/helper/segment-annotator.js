@@ -42,8 +42,8 @@ function (Layer, segmentation, morph) {
     this._createLayers(options);
     this._initializeHistory(options);
     this.mode = "superpixel"; 
-    this.polygon_points = [];
-    this.prev_annotation_img;        
+    this.polygonPoints = [];
+    this.prevAnnotationImg;        
     var annotator = this;
     this.layers.image.load(imageURL, {
       width: options.width,
@@ -372,6 +372,7 @@ function (Layer, segmentation, morph) {
           annotator.mode = "superpixel";
         } else { 
           annotator.mode = "polygon"; 
+		  annotator._updateHighlight(null);
         }
         annotator._emptyPolygonPoints();
       }
@@ -464,31 +465,31 @@ function (Layer, segmentation, morph) {
     //get canvas
     var canvas = annotator.layers.annotation.canvas;
     var ctx = canvas.getContext('2d');    
-    if (this.polygon_points.length == 0) {
+    if (this.polygonPoints.length == 0) {
         ctx.save();  //remember previous state
-        annotator.prev_annotation_img = ctx.getImageData(0,0,canvas.width,canvas.height);
+        annotator.prevAnnotationImg = ctx.getImageData(0,0,canvas.width,canvas.height);
     }
     //draw
     ctx.fillStyle = '#FA6900';    
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
-    if (this.polygon_points.length == 0) {
+    if (this.polygonPoints.length == 0) {
         ctx.beginPath();
         ctx.moveTo( x, y);
     } else {
         ctx.lineTo( x, y);
         ctx.stroke();
     }    
-    this.polygon_points.push(pos);    
+    this.polygonPoints.push(pos);    
   };
   
   Annotator.prototype._emptyPolygonPoints = function () {
     var annotator = this;  
     var ctx = annotator.layers.annotation.canvas.getContext('2d');
     ctx.restore();
-    if(annotator.prev_annotation_img) ctx.putImageData(annotator.prev_annotation_img,0,0);
+    if(annotator.prevAnnotationImg) ctx.putImageData(annotator.prevAnnotationImg,0,0);
     //reset polygon-points
-    annotator.polygon_points = [];
+    annotator.polygonPoints = [];
   };
   
   Annotator.prototype._addPolygonToAnnotation = function () {
@@ -500,13 +501,13 @@ function (Layer, segmentation, morph) {
     var ctx = canvas.getContext('2d');
     ctx.fillStyle = "rgba(0,0,255,255)";
     ctx.beginPath();
-    ctx.moveTo(annotator.polygon_points[0][0],annotator.polygon_points[0][1]);
-    for (i=1; i< annotator.polygon_points.length; ++i) {
-      var x = annotator.polygon_points[i][0];
-      var y = annotator.polygon_points[i][1];
+    ctx.moveTo(annotator.polygonPoints[0][0],annotator.polygonPoints[0][1]);
+    for (i = 1; i < annotator.polygonPoints.length; ++i) {
+      var x = annotator.polygonPoints[i][0];
+      var y = annotator.polygonPoints[i][1];
       ctx.lineTo( x, y);
     }
-    ctx.lineTo(annotator.polygon_points[0][0],annotator.polygon_points[0][1]);
+    ctx.lineTo(annotator.polygonPoints[0][0],annotator.polygonPoints[0][1]);
     ctx.closePath();
     ctx.fill();
     //get pixels within polygon
@@ -514,38 +515,37 @@ function (Layer, segmentation, morph) {
     var imageData = ctx.getImageData(0,0, canvas.width, canvas.height);
     var data = imageData.data;
     var pixels_polygon=[];
-    for (var x=0; x<canvas.width; x++) {
-      for (var y=0; y<canvas.height; y++) {
+    for (var x = 0; x < canvas.width; ++x) {
+      for (var y = 0; y < canvas.height; ++y) {
         var index = (x + y * imageData.width) * 4;
         var color = data.slice(index, index+4);
-        if (data[index+0]==colorToCheck[0] &&   
-            data[index+1]==colorToCheck[1] &&
-            data[index+2]==colorToCheck[2] &&  
-            data[index+3]==colorToCheck[3]) {
+        if (data[index+0] == colorToCheck[0] &&   
+            data[index+1] == colorToCheck[1] &&
+            data[index+2] == colorToCheck[2] &&  
+            data[index+3] == colorToCheck[3]) {
           var cx={"X":x,"Y":y}; 
           pixels_polygon.push(index);
         }
       }
     }    
     //update annotation
-    annotator._updateAnnotation(pixels_polygon, annotator.currentLabel);
-    //reset
-    annotator._emptyPolygonPoints();
+    annotator._updateAnnotation(pixels_polygon, annotator.currentLabel);    
+    annotator._emptyPolygonPoints(); 
   };
     
   Annotator.prototype._checkLineIntersection = function () {
-    if (this.polygon_points.length<4) 
+    if (this.polygonPoints.length<4) 
 	  return false;
-    var newLineStartX = this.polygon_points[this.polygon_points.length-2][0];
-    var newLineStartY = this.polygon_points[this.polygon_points.length-2][1];
-    var newLineEndX = this.polygon_points[this.polygon_points.length-1][0];
-    var newLineEndY = this.polygon_points[this.polygon_points.length-1][1];
+    var newLineStartX = this.polygonPoints[this.polygonPoints.length-2][0];
+    var newLineStartY = this.polygonPoints[this.polygonPoints.length-2][1];
+    var newLineEndX = this.polygonPoints[this.polygonPoints.length-1][0];
+    var newLineEndY = this.polygonPoints[this.polygonPoints.length-1][1];
     
-    for (i=1; i<this.polygon_points.length-2; ++i) {        
-      var line1StartX = this.polygon_points[i-1][0];
-      var line1StartY = this.polygon_points[i-1][1];
-      var line1EndX = this.polygon_points[i][0];
-      var line1EndY = this.polygon_points[i][1];  
+    for (i = 1; i < this.polygonPoints.length-2; ++i) {        
+      var line1StartX = this.polygonPoints[i-1][0];
+      var line1StartY = this.polygonPoints[i-1][1];
+      var line1EndX = this.polygonPoints[i][0];
+      var line1EndY = this.polygonPoints[i][1];  
       var denominator = ((newLineEndY - newLineStartY) * (line1EndX - line1StartX)) - ((newLineEndX - newLineStartX) * (line1EndY - line1StartY));
       var a = line1StartY - newLineStartY;
       var b = line1StartX - newLineStartX;
