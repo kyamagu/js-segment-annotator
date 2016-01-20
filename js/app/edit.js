@@ -198,11 +198,11 @@ function(Layer, Annotator, util) {
         spacer2 = document.createElement("div"),
         denoiseButton = document.createElement("div"),
         spacer3 = document.createElement("div"),
-		superpixelToolButton = document.createElement("div"),
+        superpixelToolButton = document.createElement("div"),
         spacer4 = document.createElement("div"),        
-		polygonToolButton = document.createElement("div"),
+        polygonToolButton = document.createElement("div"),
         spacer5 = document.createElement("div"),
-		manualParagraph = document.createElement("p"),
+        manualParagraph = document.createElement("p"),
         spacer6 = document.createElement("div"),
         exportButton = document.createElement("input"),
         manualText;
@@ -228,13 +228,13 @@ function(Layer, Annotator, util) {
     denoiseButton.addEventListener("click", function () {
       annotator.denoise();
     });
-	superpixelToolButton.className = "edit-sidebar-button";
-	superpixelToolButton.appendChild(document.createTextNode("Superpixel tool"));
+    superpixelToolButton.className = "edit-sidebar-button";
+    superpixelToolButton.appendChild(document.createTextNode("Superpixel tool"));
     superpixelToolButton.addEventListener("click", function () {
       annotator._setMode("superpixel");
     });
-	polygonToolButton.className = "edit-sidebar-button";
-	polygonToolButton.appendChild(document.createTextNode("Polygon tool"));
+    polygonToolButton.className = "edit-sidebar-button";
+    polygonToolButton.appendChild(document.createTextNode("Polygon tool"));
     polygonToolButton.addEventListener("click", function () {
       annotator._setMode("polygon");
     });
@@ -244,13 +244,13 @@ function(Layer, Annotator, util) {
     manualParagraph.appendChild(document.createTextNode("Left: mark"));
     manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("Right: pick label"));
-	manualParagraph.appendChild(document.createElement("br"));
-	manualParagraph.appendChild(document.createElement("br"));
-	manualParagraph.appendChild(document.createTextNode("+Polygon tool"));
-	manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createTextNode("+Polygon tool"));
+    manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("Ctrl: toggle mode"));
-	manualParagraph.appendChild(document.createElement("br"));
-	manualParagraph.appendChild(document.createTextNode("Right: abort polygon"));
+    manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createTextNode("Right: abort polygon"));
     spacer4.className = "edit-sidebar-spacer";
     container.className = "edit-sidebar";
     container.appendChild(labelPicker);
@@ -259,9 +259,9 @@ function(Layer, Annotator, util) {
     container.appendChild(redoButton);
     container.appendChild(spacer2);
     container.appendChild(denoiseButton);
-	container.appendChild(spacer3);
-	container.appendChild(polygonToolButton);
-	container.appendChild(superpixelToolButton);    
+    container.appendChild(spacer3);
+    container.appendChild(polygonToolButton);
+    container.appendChild(superpixelToolButton);    
     container.appendChild(manualParagraph);
     //container.appendChild(spacer4);
     container.appendChild(exportButton);
