@@ -27,7 +27,7 @@ function(Layer, Annotator, util) {
         nextAnchorText = document.createTextNode("Next"),
         prevAnchor, nextAnchor;
     indexAnchor.href = util.makeQueryParams({ view: "index" });
-    indexAnchor.appendChild(document.createTextNode("Index"));
+    indexAnchor.appendChild(indexAnchorText);
     if (id > 0) {
       prevAnchor = document.createElement("a");
       prevAnchor.appendChild(prevAnchorText);
@@ -98,19 +98,19 @@ function(Layer, Annotator, util) {
         alphaPlusButton = document.createElement("div");
     zoomOutButton.appendChild(document.createTextNode("-"));
     zoomOutButton.classList.add("edit-image-top-button");
-    zoomOutButton.addEventListener("click", function (event) {
+    zoomOutButton.addEventListener("click", function () {
       annotator.zoomOut();
     });
     zoomInButton.appendChild(document.createTextNode("zoom +"));
     zoomInButton.classList.add("edit-image-top-button");
-    zoomInButton.addEventListener("click", function (event) {
+    zoomInButton.addEventListener("click", function () {
       annotator.zoomIn();
     });
     spacer1.className = "edit-image-top-spacer";
     boundaryButton.id = "boundary-button";
     boundaryButton.className = "edit-image-top-button";
     boundaryButton.appendChild(document.createTextNode("boundary"));
-    boundaryButton.addEventListener("click", function (event) {
+    boundaryButton.addEventListener("click", function () {
       if (boundaryFlashTimeoutID)
         window.clearTimeout(boundaryFlashTimeoutID);
       if (boundaryButton.classList.contains("edit-image-top-button-enabled"))
@@ -290,7 +290,7 @@ function(Layer, Annotator, util) {
     labelText.className = "edit-sidebar-legend-label";
     popupButton.appendChild(document.createTextNode("+"));
     popupButton.className = "edit-sidebar-popup-trigger";
-    popupButton.addEventListener("click",  function (event) {
+    popupButton.addEventListener("click",  function () {
       popupContainer.classList.toggle("edit-sidebar-popup-active");
     });
     popupContainer.className = "edit-sidebar-popup";
@@ -376,7 +376,7 @@ function(Layer, Annotator, util) {
         firstOption = document.createElement("option");
     firstOption.appendChild(document.createTextNode("Change to"));
     select.appendChild(firstOption);
-    for (i = 0; i < data.labels.length; ++i) {
+    for (var i = 0; i < data.labels.length; ++i) {
       if (i !== index) {
         var option = document.createElement("option");
         option.value = i;

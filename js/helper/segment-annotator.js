@@ -287,10 +287,10 @@ function (Layer, segmentation, morph) {
         canvas.height = this.height;
       }
     }
-    this.innerContainer.style.width = this.width;
-    this.innerContainer.style.height = this.height;
-    this.container.style.width = this.width;
-    this.container.style.height = this.height;
+    this.innerContainer.style.width = this.width + "px";
+    this.innerContainer.style.height = this.height + "px";
+    this.container.style.width = this.width + "px";
+    this.container.style.height = this.height + "px";
   };
 
   Annotator.prototype._initializeHistory = function (options) {
@@ -350,7 +350,7 @@ function (Layer, segmentation, morph) {
     }
     canvas.addEventListener('mousemove', updateIfActive);
     canvas.addEventListener('mouseup', updateIfActive);
-    canvas.addEventListener('mouseleave', function (event) {
+    canvas.addEventListener('mouseleave', function () {
       annotator._updateHighlight(null);
       if (typeof annotator.onmousemove === "function") {
         annotator.onmousemove.call(annotator, null);
@@ -360,7 +360,7 @@ function (Layer, segmentation, morph) {
       mousestate.down = true;
       mousestate.button = event.button;
     });
-    window.addEventListener('mouseup', function (event) {
+    window.addEventListener('mouseup', function () {
       mousestate.down = false;
     });
     //polygon on/off with ctrl-key
@@ -438,16 +438,17 @@ function (Layer, segmentation, morph) {
 
   Annotator.prototype._getClickPos = function (event) {
     var container = this.container,
+        containerRect = container.getBoundingClientRect(), win = window, docElem = document.documentElement,
+        offsetLeft = containerRect.left + (win.pageXOffset || docElem.scrollLeft) - (docElem.clientLeft || 0),
+        offsetTop = containerRect.top + (win.pageYOffset || docElem.scrollTop) - (docElem.clientTop || 0),
         x = Math.round(
-          (event.pageX - container.offsetLeft + container.scrollLeft) *
+          (event.pageX - offsetLeft + container.scrollLeft) *
           (container.offsetWidth / container.scrollWidth)
           ),
         y = Math.round(
-          (event.pageY - container.offsetTop + container.scrollTop) *
+          (event.pageY - offsetTop + container.scrollTop) *
           (container.offsetHeight / container.scrollHeight)
           ),
-        data = this.layers.superpixel.imageData.data,
-        canvas = this.layers.image.canvas;
     x = Math.max(Math.min(x, this.layers.visualization.canvas.width - 1), 0);
     y = Math.max(Math.min(y, this.layers.visualization.canvas.height - 1), 0);
     return [x, y];
@@ -608,7 +609,7 @@ function (Layer, segmentation, morph) {
       throw "Invalid fill: " + pixels.length + " !== " + labels.length;
     var annotationData = this.layers.annotation.imageData.data,
         visualizationData = this.layers.visualization.imageData.data;
-    for (i = 0; i < pixels.length; ++i) {
+    for (var i = 0; i < pixels.length; ++i) {
       var offset = pixels[i],
           label = labels[i],
           color = this.colormap[label];
@@ -667,24 +668,24 @@ function (Layer, segmentation, morph) {
     return array;
   }
 
-  function _findMostFrequent(annotationData, pixels) {
-    var histogram = {},
-        j;
-    for (j = 0; j < pixels.length; ++j) {
-      var label = _getEncodedLabel(annotationData, pixels[j]);
-      histogram[label] = (histogram[label]) ? histogram[label] + 1 : 1;
-    }
-    var maxFrequency = 0,
-        majorLabel = 0;
-    for (j in histogram) {
-      var frequency = histogram[j];
-      if (frequency > maxFrequency) {
-        maxFrequency = frequency;
-        majorLabel = j;
-      }
-    }
-    return majorLabel;
-  }
+  // function _findMostFrequent(annotationData, pixels) {
+  //   var histogram = {},
+  //       j;
+  //   for (j = 0; j < pixels.length; ++j) {
+  //     var label = _getEncodedLabel(annotationData, pixels[j]);
+  //     histogram[label] = (histogram[label]) ? histogram[label] + 1 : 1;
+  //   }
+  //   var maxFrequency = 0,
+  //       majorLabel = 0;
+  //   for (j in histogram) {
+  //     var frequency = histogram[j];
+  //     if (frequency > maxFrequency) {
+  //       maxFrequency = frequency;
+  //       majorLabel = j;
+  //     }
+  //   }
+  //   return majorLabel;
+  // }
 
   function _getEncodedLabel(array, offset) {
     return array[offset] |

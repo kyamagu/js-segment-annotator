@@ -194,7 +194,6 @@ function(BaseSegmentation, compat) {
   SLICO.prototype.getLABXYSeedsForGivenK = function(K, perturb) {
     var size = Math.floor(this.width * this.height);
     var step = Math.sqrt(parseFloat(size) / parseFloat(K));
-    var T = Math.round(step);
     var xoff = Math.round(step / 2);
     var yoff = Math.round(step / 2);
     var n = 0;
@@ -233,21 +232,21 @@ function(BaseSegmentation, compat) {
     return array;
   }
 
-  function findMinMax(data) {
-    var min = Infinity, max = -Infinity;
-    for (var i = 0; i < data.length; ++i) {
-      min = Math.min(min, data[i]);
-      max = Math.max(max, data[i]);
-    }
-    return [min, max];
-  }
+  // function findMinMax(data) {
+  //   var min = Infinity, max = -Infinity;
+  //   for (var i = 0; i < data.length; ++i) {
+  //     min = Math.min(min, data[i]);
+  //     max = Math.max(max, data[i]);
+  //   }
+  //   return [min, max];
+  // }
 
-  function sum(data) {
-    var value = 0;
-    for (var i = 0; i < data.length; ++i)
-      value += data[i];
-    return value;
-  }
+  // function sum(data) {
+  //   var value = 0;
+  //   for (var i = 0; i < data.length; ++i)
+  //     value += data[i];
+  //   return value;
+  // }
 
   SLICO.prototype.performSuperpixelSegmentationVariableSandM = function (
     kLabels,
@@ -269,7 +268,6 @@ function(BaseSegmentation, compat) {
         distvec = fillArray(new Float64Array(size), Infinity),
         maxlab = fillArray(new Float64Array(numK), Math.pow(10, 2)),
         maxxy = fillArray(new Float64Array(numK), Math.pow(step, 2)),
-        invxywt = 1.0 / Math.pow(step, 2),
         i, j, k, n, x, y;
     while (numIter < maxIterations) {
       ++numIter;
@@ -293,7 +291,6 @@ function(BaseSegmentation, compat) {
                          Math.pow(b - this.kSeedsB[n], 2);
             distxy[i] = Math.pow(x - this.kSeedsX[n], 2) +
                         Math.pow(y - this.kSeedsY[n], 2);
-            // var dist = distlab[i] / maxlab[n] + distxy[i] * invxywt;
             var dist = distlab[i] / maxlab[n] + distxy[i] / maxxy[n];
             if (dist < distvec[i]) {
               distvec[i] = dist;
@@ -323,14 +320,14 @@ function(BaseSegmentation, compat) {
       fillArray(clusterSize, 0);
       for (j = 0; j < size; ++j) {
         var temp = kLabels[j];
-        if (kLabels[j] < 0)
+        if (temp < 0)
           throw "Assertion error";
-        sigmal[kLabels[j]] += this.lvec[j];
-        sigmaa[kLabels[j]] += this.avec[j];
-        sigmab[kLabels[j]] += this.bvec[j];
-        sigmax[kLabels[j]] += (j % this.width);
-        sigmay[kLabels[j]] += (j / this.width);
-        clusterSize[kLabels[j]]++;
+        sigmal[temp] += this.lvec[j];
+        sigmaa[temp] += this.avec[j];
+        sigmab[temp] += this.bvec[j];
+        sigmax[temp] += (j % this.width);
+        sigmay[temp] += (j / this.width);
+        clusterSize[temp]++;
       }
       for (k = 0; k < numK; ++k) {
         if (clusterSize[k] <= 0)
@@ -413,7 +410,7 @@ function(BaseSegmentation, compat) {
     this.doRGBtoLABConversion(this.imageData);
     if (this.perturb)
       this.detectLabEdges();
-    this.getLABXYSeedsForGivenStepSize(step, this.perturb);
+    this.getLABXYSeedsForGivenStepSize(this.step, this.perturb);
     this.performSuperpixelSegmentationVariableSandM(kLabels,
                                                     this.step,
                                                     this.maxIterations);
@@ -422,7 +419,7 @@ function(BaseSegmentation, compat) {
       var nlabels = fillArray(new Int32Array(size), -1);
       numlabels = this.enforceLabelConnectivity(kLabels,
                                                 nlabels,
-                                                size / (step * step));
+                                                size / (this.step * this.estep));
       for (var i = 0; i < size; ++i)
         kLabels[i] = nlabels[i];
     }
@@ -455,7 +452,7 @@ function(BaseSegmentation, compat) {
         data = fillArray(imageData.data, 255),
         color = [255, 0, 0],
         dx8 = [-1, -1,  0,  1, 1, 1, 0, -1],
-        dy8 = [ 0, -1, -1, -1, 0, 1, 1,  1];
+        dy8 = [ 0, -1, -1, -1, 0, 1, 1,  1],
         istaken = fillArray(new Uint8Array(this.width * this.height), 0);
     var mainindex = 0;
     for (var j = 0; j < this.height; ++j) {

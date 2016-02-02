@@ -86,7 +86,7 @@ define(function() {
     this.canvas.height = imageData.height;
     var context = this.canvas.getContext("2d");
     this._setImageSmoothing(context, options);
-    context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height);
+    context.drawImage(imageData, 0, 0, this.canvas.width, this.canvas.height);
     this.imageData = context.getImageData(0, 0,
                                           this.canvas.width,
                                           this.canvas.height);
@@ -176,7 +176,7 @@ define(function() {
         edgeMap = new Uint8Array(this.imageData.data),
         foreground = options.foreground || [255, 255, 255],
         background = options.background || [0, 0, 0],
-        i, j, k, c = {};
+        i, j, k;
     for (i = 0; i < height; ++i) {
       for (j = 0; j < width; ++j) {
         var offset = 4 * (i * width + j),
@@ -203,7 +203,7 @@ define(function() {
     return this;
   };
 
-  Layer.prototype.gray2index = function (options) {
+  Layer.prototype.gray2index = function () {
     var data = this.imageData.data;
     for (var i = 0; i < data.length; i += 4) {
       data[i + 1] = 0;

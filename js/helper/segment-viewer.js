@@ -64,8 +64,8 @@ define(['../image/layer'], function(Layer) {
         canvas.height = this.height;
       }
     }
-    this.container.style.width = this.width;
-    this.container.style.height = this.height;
+    this.container.style.width = this.width + "px";
+    this.container.style.height = this.height + "px";
   };
 
   Viewer.prototype._initializeIfReady = function (options) {
@@ -98,7 +98,7 @@ define(['../image/layer'], function(Layer) {
         i;
     if (typeof index === "undefined") {
       index = [];
-      for (i = 0; i < labels.length; ++i)
+      for (i = 0; i < this.labels.length; ++i)
         index.push(i);
     }
     legendContainer.classList.add("segment-viewer-legend-container");
