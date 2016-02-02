@@ -199,7 +199,7 @@ function(Layer, Annotator, util) {
         denoiseButton = document.createElement("div"),
         spacer3 = document.createElement("div"),
         superpixelToolButton = document.createElement("div"),
-        spacer4 = document.createElement("div"),        
+        spacer4 = document.createElement("div"),
         polygonToolButton = document.createElement("div"),
         spacer5 = document.createElement("div"),
         manualParagraph = document.createElement("p"),
@@ -229,19 +229,25 @@ function(Layer, Annotator, util) {
       annotator.denoise();
     });
     superpixelToolButton.className = "edit-sidebar-button";
-    superpixelToolButton.appendChild(document.createTextNode("Superpixel tool"));
+    superpixelToolButton.appendChild(
+      document.createTextNode("Superpixel tool"));
     superpixelToolButton.addEventListener("click", function () {
+      polygonToolButton.classList.remove("edit-sidebar-button-selected");
+      superpixelToolButton.classList.add("edit-sidebar-button-selected");
       annotator._setMode("superpixel");
     });
+    superpixelToolButton.classList.add("edit-sidebar-button-selected");
     polygonToolButton.className = "edit-sidebar-button";
     polygonToolButton.appendChild(document.createTextNode("Polygon tool"));
     polygonToolButton.addEventListener("click", function () {
+      superpixelToolButton.classList.remove("edit-sidebar-button-selected");
+      polygonToolButton.classList.add("edit-sidebar-button-selected");
       annotator._setMode("polygon");
     });
     spacer3.className = "edit-sidebar-spacer";
     manualParagraph.appendChild(document.createTextNode("ctrl: toggle mode"));
-	manualParagraph.appendChild(document.createElement("br"));
-	manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("+Superpixel tool:"));
     manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("left: mark"));
@@ -250,7 +256,7 @@ function(Layer, Annotator, util) {
     manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("+Polygon tool:"));
-	manualParagraph.appendChild(document.createElement("br"));
+    manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("left: draw line"));
     manualParagraph.appendChild(document.createElement("br"));
     manualParagraph.appendChild(document.createTextNode("right: abort"));
@@ -264,7 +270,7 @@ function(Layer, Annotator, util) {
     container.appendChild(denoiseButton);
     container.appendChild(spacer3);
     container.appendChild(polygonToolButton);
-    container.appendChild(superpixelToolButton);    
+    container.appendChild(superpixelToolButton);
     container.appendChild(manualParagraph);
     //container.appendChild(spacer4);
     container.appendChild(exportButton);
