@@ -63,7 +63,7 @@ Encode:
 
     X = cat(3, bitand(annotation, 255), ...
                bitand(bitshift(annotation, -8), 255), ...
-               bitand(bitshift(annotation, -16)), 255));
+               bitand(bitshift(annotation, -16), 255));
     imwrite(uint8(X), 'data/annotations/0.png');
 
 Decode:
