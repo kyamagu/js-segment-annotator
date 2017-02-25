@@ -336,11 +336,14 @@ function (Layer, segmentation, morph) {
           else
             annotator.onrightclick.call(annotator, existingLabel);
         } else {
+          if (annotator.mode === "brush" && event.button === 0) {
+            annotator.brush(annotator._getClickPos(event), annotator.currentLabel);
+          }
           if (event.button === 0 && annotator.mode === "polygon") {
             annotator._addPolygonPoint(event);
             if (annotator._checkLineIntersection())
               annotator._addPolygonToAnnotation();
-          } else {
+          } else if (annotator.mode === "superpixel") {
             annotator._updateAnnotation(pixels, annotator.currentLabel);
           }
           if (typeof annotator.onleftclick === "function")

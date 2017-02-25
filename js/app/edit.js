@@ -202,8 +202,10 @@ function(Layer, Annotator, util) {
         spacer4 = document.createElement("div"),
         polygonToolButton = document.createElement("div"),
         spacer5 = document.createElement("div"),
-        manualParagraph = document.createElement("p"),
+        brushToolButton = document.createElement("div"),
         spacer6 = document.createElement("div"),
+        manualParagraph = document.createElement("p"),
+        spacer7 = document.createElement("div"),
         exportButton = document.createElement("input"),
         manualText;
     exportButton.type = "submit";
@@ -233,6 +235,7 @@ function(Layer, Annotator, util) {
       document.createTextNode("Superpixel tool"));
     superpixelToolButton.addEventListener("click", function () {
       polygonToolButton.classList.remove("edit-sidebar-button-selected");
+      brushToolButton.classList.remove("edit-sidebar-button-selected");
       superpixelToolButton.classList.add("edit-sidebar-button-selected");
       annotator._setMode("superpixel");
     });
@@ -241,9 +244,23 @@ function(Layer, Annotator, util) {
     polygonToolButton.appendChild(document.createTextNode("Polygon tool"));
     polygonToolButton.addEventListener("click", function () {
       superpixelToolButton.classList.remove("edit-sidebar-button-selected");
+      brushToolButton.classList.remove("edit-sidebar-button-selected");
       polygonToolButton.classList.add("edit-sidebar-button-selected");
       annotator._setMode("polygon");
     });
+
+    brushToolButton.classList.add("edit-sidebar-button-selected");
+    brushToolButton.className = "edit-sidebar-button";
+    brushToolButton.appendChild(document.createTextNode("Brush tool"));
+    brushToolButton.addEventListener("click", function () {
+      superpixelToolButton.classList.remove("edit-sidebar-button-selected");
+      polygonToolButton.classList.remove("edit-sidebar-button-selected");
+      brushToolButton.classList.add("edit-sidebar-button-selected");
+
+      annotator._setMode("brush");
+    });
+
+
     spacer3.className = "edit-sidebar-spacer";
     manualParagraph.appendChild(document.createTextNode("ctrl: toggle mode"));
     manualParagraph.appendChild(document.createElement("br"));
@@ -271,6 +288,7 @@ function(Layer, Annotator, util) {
     container.appendChild(spacer3);
     container.appendChild(polygonToolButton);
     container.appendChild(superpixelToolButton);
+    container.appendChild(brushToolButton);
     container.appendChild(manualParagraph);
     //container.appendChild(spacer4);
     container.appendChild(exportButton);
@@ -324,6 +342,24 @@ function(Layer, Annotator, util) {
     });
     return pickButton;
   }
+
+    // Write the brush tool
+  Annotator.prototype.brush = function (pos, label) {
+    var offsets = [], labels = [];
+    for (var y = -2; y <= 2; y++) {
+      for (var x = -2; x <= 2; x++) {
+        // it is circle bitches
+        if ((x*x + y*y) > 7) continue;
+        var offset = 4 * ((pos[1]+y) * this.layers.visualization.canvas.width + (pos[0]+x));
+        offsets.push(offset);
+        labels.push(label);
+      }
+    }
+    this._updateAnnotation(offsets, labels);
+    this.layers.visualization.render();
+    if (typeof this.onchange === "function")
+      this.onchange.call(this);
+  };
 
   // Hightlight legend labels.
   function highlightLabel(label) {
