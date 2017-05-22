@@ -51,6 +51,66 @@ implementation across Web browsers. The difference stems from numerical
 precision of floating point numbers, and there is no easy way to produce the
 exact same result across browsers.
 
+
+Python tips
+-----------
+
+_Annotation PNG_
+
+The annotation PNG file contains label map encoded in RGB value. Do the
+following to encode an index map.
+
+```python
+import numpy as np
+from PIL import Image
+
+# Decode
+encoded = np.array(Image.open('data/annotations/1.png'))
+annotation = np.bitwise_or(np.bitwise_or(
+    encoded[:, :, 0].astype(np.uint32),
+    encoded[:, :, 1].astype(np.uint32) << 8),
+    encoded[:, :, 2].astype(np.uint32) << 16)
+
+print(np.unique(annotation))
+
+# Encode
+Image.fromarray(np.stack([
+    np.bitwise_and(annotation, 255),
+    np.bitwise_and(annotation >> 8, 255),
+    np.bitwise_and(annotation >> 16, 255),
+    ], axis=2).astype(np.uint8)).save('encoded.png')
+```
+
+_JSON_
+
+Use JSON module.
+
+```python
+import json
+
+dataset = json.load('data/example.json')
+```
+
+_Using dataURL_
+
+Do the following to convert between dataURL and NumPy format.
+
+```python
+from PIL import Image
+import base64
+import io
+
+# Encode
+with io.BytesIO() as buffer:
+    encoded.save(buffer, format='png')
+    data_url = b'data:image/png;base64,' + base64.b64encode(buffer.getvalue())
+
+# Decode
+binary = base64.b64decode(data_url.replace(b'data:image/png;base64,', b''))
+encoded = Image.open(io.BytesIO(binary))
+```
+
+
 Matlab tips
 -----------
 
@@ -59,19 +119,21 @@ _Annotation PNG_
 The annotation PNG file contains label map encoded in RGB value. Do the
 following to encode an index map.
 
-Encode:
+```matlab
+% Decode
 
-    X = cat(3, bitand(annotation, 255), ...
-               bitand(bitshift(annotation, -8), 255), ...
-               bitand(bitshift(annotation, -16)), 255));
-    imwrite(uint8(X), 'data/annotations/0.png');
+X = imread('data/annotations/0.png');
+annotation = X(:, :, 1);
+annotation = bitor(annotation, bitshift(X(:, :, 2), 8));
+annotation = bitor(annotation, bitshift(X(:, :, 3), 16));
 
-Decode:
+% Encode
 
-    X = imread('data/annotations/0.png');
-    annotation = X(:, :, 1);
-    annotation = bitor(annotation, bitshift(X(:, :, 2), 8));
-    annotation = bitor(annotation, bitshift(X(:, :, 3), 16));
+X = cat(3, bitand(annotation, 255), ...
+           bitand(bitshift(annotation, -8), 255), ...
+           bitand(bitshift(annotation, -16)), 255));
+imwrite(uint8(X), 'data/annotations/0.png');
+```
 
 _JSON_
 
@@ -87,14 +149,15 @@ Get the byte encoding tools.
 
 Do the following to convert between dataURL and Matlab format.
 
-Encode:
+```matlab
+% Decode
 
-    png_data = imencode(annotation, 'png');
-    dataURL = ['data:image/png;base64,’, base64encode(png_data)];
+dataURL = 'data:image/png;base64,...';
+png_data = base64decode(strrep(dataURL, 'data:image/png;base64,’, ‘’));
+annotation = imdecode(png_data, ‘png’);
 
-Decode:
+% Encode
 
-    dataURL = 'data:image/png;base64,...';
-    png_data = base64decode(strrep(dataURL, 'data:image/png;base64,’, ‘’));
-    annotation = imdecode(png_data, ‘png’);
-
+png_data = imencode(annotation, 'png');
+dataURL = ['data:image/png;base64,’, base64encode(png_data)];
+```
