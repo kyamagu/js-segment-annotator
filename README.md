@@ -161,3 +161,21 @@ annotation = imdecode(png_data, ‘png’);
 png_data = imencode(annotation, 'png');
 dataURL = ['data:image/png;base64,’, base64encode(png_data)];
 ```
+
+Citation
+--------
+
+We appreciate if you cite the following article in an academic paper. The tool was originally developed for this work.
+
+```
+@article{tangseng2017looking,
+Author        = {Pongsate Tangseng and Zhipeng Wu and Kota Yamaguchi},
+Title         = {Looking at Outfit to Parse Clothing},
+Eprint        = {1703.01386v1},
+ArchivePrefix = {arXiv},
+PrimaryClass  = {cs.CV},
+Year          = {2017},
+Month         = {Mar},
+Url           = {http://arxiv.org/abs/1703.01386v1}
+}
+```
