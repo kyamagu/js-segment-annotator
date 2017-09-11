@@ -88,7 +88,8 @@ Use JSON module.
 ```python
 import json
 
-dataset = json.load('data/example.json')
+with open('data/example.json', 'r') as f:
+    dataset = json.load(f)
 ```
 
 _Using dataURL_
@@ -153,13 +154,13 @@ Do the following to convert between dataURL and Matlab format.
 % Decode
 
 dataURL = 'data:image/png;base64,...';
-png_data = base64decode(strrep(dataURL, 'data:image/png;base64,’, ‘’));
-annotation = imdecode(png_data, ‘png’);
+png_data = base64decode(strrep(dataURL, 'data:image/png;base64,', ''));
+annotation = imdecode(png_data, 'png');
 
 % Encode
 
 png_data = imencode(annotation, 'png');
-dataURL = ['data:image/png;base64,’, base64encode(png_data)];
+dataURL = ['data:image/png;base64,', base64encode(png_data)];
 ```
 
 Citation
