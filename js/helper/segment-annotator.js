@@ -335,7 +335,8 @@ function (Layer, segmentation, morph) {
             annotator.onrightclick.call(annotator, existingLabel);
         } else {
           if (annotator.mode === "brush" && event.button === 0) {
-            annotator.brush(annotator._getClickPos(event), annotator.currentLabel);
+            annotator.brush(annotator._getClickPos(event),
+                            annotator.currentLabel);
           }
           if (event.button === 0 && annotator.mode === "polygon") {
             annotator._addPolygonPoint(event);
@@ -439,9 +440,13 @@ function (Layer, segmentation, morph) {
 
   Annotator.prototype._getClickPos = function (event) {
     var container = this.container,
-        containerRect = container.getBoundingClientRect(), win = window, docElem = document.documentElement,
-        offsetLeft = containerRect.left + (win.pageXOffset || docElem.scrollLeft) - (docElem.clientLeft || 0),
-        offsetTop = containerRect.top + (win.pageYOffset || docElem.scrollTop) - (docElem.clientTop || 0),
+        containerRect = container.getBoundingClientRect(),
+        offsetLeft = containerRect.left + (
+            window.pageXOffset || document.documentElement.scrollLeft
+            ) - (document.documentElement.clientLeft || 0),
+        offsetTop = containerRect.top + (
+            window.pageYOffset || document.documentElement.scrollTop
+            ) - (document.documentElement.clientTop || 0),
         x = Math.round(
           (event.pageX - offsetLeft + container.scrollLeft) *
           (container.offsetWidth / container.scrollWidth)
