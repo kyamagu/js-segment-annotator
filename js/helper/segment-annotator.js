@@ -38,8 +38,6 @@ function (Layer, segmentation, morph) {
     this.onmousemove = options.onmousemove || null;
     this._createLayers(options);
     this._initializeHistory(options);
-    this._createLayers(options);
-    this._initializeHistory(options);
     this.mode = "superpixel";
     this.polygonPoints = [];
     this.prevAnnotationImg = null;
