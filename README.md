@@ -41,7 +41,7 @@ be omitted. Place the JSON file inside the `data/` directory.
 Then edit `main.js` to point to this JSON file. Open a Web browser and visit
 `index.html`.
 
-Know issues
+Known issues
 -----------
 
 _Browser incompatibility_
